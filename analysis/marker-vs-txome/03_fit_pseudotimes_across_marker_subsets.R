@@ -68,7 +68,7 @@ cmats <- lapply(seq_along(sce_list_with_marker_pseudotime), function(i) {
   
 })
 
-save(cmats, file = "data/marker-vs-txome/pseudotimes_across_marker_subset_array.rds")
+saveRDS(cmats, file = "data/marker-vs-txome/pseudotimes_across_marker_subset_array.rds")
 
 
 

@@ -38,8 +38,12 @@ if(any(is.na(ouija_pseudotime))) {
     mutate(algorithm = "ouija")
 }
 
-sde_tscan <- switchde(sce, tscan_pseudotime) %>% 
-  mutate(algorithm = "tscan")
+if(any(is.na(sde_tscan))) {
+  sde_tscan <- NULL
+} else {
+  sde_tscan <- switchde(sce, tscan_pseudotime) %>% 
+    mutate(algorithm = "tscan")
+}
 
 sde_monocle <- switchde(sce, monocle_pseudotime) %>% 
   mutate(algorithm = "monocle")

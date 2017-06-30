@@ -69,7 +69,7 @@ rule markers_to_use:
 
 rule fit_pseudotimes_across_marker_subsets:
     input:
-        "data/scesets/scesets_with_pseudotime.rds"
+        "data/scesets/scesets_with_pseudotime.rds",
         "data/marker-vs-txome/markers_to_use.rds"
     output:
         "data/scesets/scesets_with_marker_pseudotime.rds",

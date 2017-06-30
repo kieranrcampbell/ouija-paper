@@ -31,8 +31,12 @@ tscan_pseudotime <- cmats[[dataset]][rep, nam_index, 2, ]
 pc1_pseudotime <- cmats[[dataset]][rep, nam_index, 4, ]
 dpt_pseudotime <- cmats[[dataset]][rep, nam_index, 5, ]
 
-sde_ouija <- switchde(sce, ouija_pseudotime) %>% 
-  mutate(algorithm = "ouija")
+if(any(is.na(ouija_pseudotime))) {
+  sde_ouija <- NULL
+} else {
+  sde_ouija <- switchde(sce, ouija_pseudotime) %>% 
+    mutate(algorithm = "ouija")
+}
 
 sde_tscan <- switchde(sce, tscan_pseudotime) %>% 
   mutate(algorithm = "tscan")

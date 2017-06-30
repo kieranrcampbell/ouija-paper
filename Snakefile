@@ -25,6 +25,8 @@ R_opts = "--vanilla"
 
 rule all:
     input:
+        "figs/marker-vs-txome-de-results.png",
+        "figs/marker-vs-txome-pseudotime-subsets.png"
 
 
 
@@ -111,4 +113,23 @@ rule tidy_de:
 		"data/marker-vs-txome/tidy_de.csv"
 	shell:
 		"Rscript {R_opts} analysis/marker-vs-txome/07_tidy_de.R"
+
+rule make_de_plot:
+    input:
+        "data/scesets/scesets.rds",
+        "data/marker-vs-txome/tidy_de.csv"
+    output:
+        "figs/marker-vs-txome-de-results.png"
+    shell:
+        "Rscript {R_opts} analysis/marker-vs-txome/08_graph_all_de.R"
+
+rule graph_pseudotime_subsets:
+    input:
+        "data/scesets/scesets_with_marker_pseudotime.rds",
+        "data/marker-vs-txome/pseudotimes_across_marker_subset_array.rds"
+    output:
+        "figs/marker-vs-txome-pseudotime-subsets.png"
+    shell:
+        "Rscript {R_opts} analysis/marker-vs-txome/09_graph_pseudotime_subsets.R"
+
 

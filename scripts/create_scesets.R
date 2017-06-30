@@ -55,7 +55,7 @@ sce_trapnell <- filter_sceset(sce_trapnell)
 
 ## this requires "scripts/read-hsc.R" to be run first
 
-load("../data/hsc-sce.Rdata")
+sce <- readRDS("data/scesets/hsc-sce.rds")
 sce <- updateSCESet(sce)
 sce_hsc <- sce[, which(!(sce$cell_type %in% c("Adult_HSC", "E11.0_T1CD201neg", "E11.0_T2_cd41_low")))]
 

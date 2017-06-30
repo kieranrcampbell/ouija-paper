@@ -3,7 +3,7 @@ library(scater)
 
 source("scripts/pseudotime_fitting_functions.R")
 
-scelist <- readRDS("data/scesets/scesets.rds")
+sce_list <- readRDS("data/scesets/scesets.rds")
 
 
 fit_all_pseudotime <- function(sce) {

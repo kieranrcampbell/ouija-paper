@@ -1,7 +1,7 @@
 library(readr)
 library(scater)
 
-hsc_dir <- "../data/GSE67120_RAW/"
+hsc_dir <- "data/raw/GSE67120_RAW/"
 files <- dir(hsc_dir)
 
 parse_name <- function(f) {

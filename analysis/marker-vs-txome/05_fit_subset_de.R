@@ -19,8 +19,8 @@ nam_index <- as.numeric(args[3]) # number of additional markers
 sce <- sce_list_with_marker_pseudotime[[dataset]]
 rm(sce_list_with_marker_pseudotime)
 
-ouija_file <- paste("ouija_pseudotime", dataset, rep, nam_index, sep = "_")
-ouija_file_path <- file.path("data", "marker-vs-txome", "ouija_fits", paste0(output_filename, ".csv"))
+ouija_filename <- paste("ouija_pseudotime", dataset, rep, nam_index, sep = "_")
+ouija_file_path <- file.path("data", "marker-vs-txome", "ouija_fits", paste0(ouija_filename, ".csv"))
 
 ouija_hmc <- read_csv(ouija_file_path)
 ouija_pseudotime <- ouija_hmc$pseudotime

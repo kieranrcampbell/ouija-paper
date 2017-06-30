@@ -1,7 +1,5 @@
 library(scater)
 library(tidyverse)
-library(monocle)
-library(HSMMSingleCell)
 library(readxl)
 
 #' Here we use genes that have a coefficient of variation 
@@ -96,13 +94,13 @@ if(!file.exists(filename)) {
                 filename)
 }
 
-d <- read_excel(filename)
+d <- read_xlsx(filename, skip = 1)
 
 d <- as.data.frame(d)
-cellnames <- as.character(d[1,-1])
-genenames <- d[-c(1,2, nrow(d)),1]
-w_pseudotimes <- as.numeric(d[2,-1])
-tpm_data <- as.matrix(d[-c(1,2, nrow(d)),-1])
+cellnames <- names(d)[-1]
+genenames <- d[-1,1]
+w_pseudotimes <- as.numeric(d[1,-1])
+tpm_data <- as.matrix(d[-1,-1])
 tpm_data <- t(apply(tpm_data, 1, as.numeric))
 
 colnames(tpm_data) <- cellnames

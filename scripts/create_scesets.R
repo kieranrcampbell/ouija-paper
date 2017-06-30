@@ -33,7 +33,7 @@ add_marker_info <- function(sce, marker_inds, k_m, k_sds = NULL) {
 
 # Trapnell ----------------------------------------------------------------
 
-data(HSMM)
+HSMM <- readRDS("data/raw/hsmm.rds")
 HSMM_trajectory <- HSMM[,HSMM$State != 3]
 
 sce_trapnell <- fromCellDataSet(HSMM_trajectory, "fpkm")

@@ -41,7 +41,8 @@ rule read_hsc:
 rule construct_scesets:
     input:
         "data/scesets/hsc-sce.rds",
-        "data/raw/waterfall_data.xlsx"
+        "data/raw/waterfall_data.xlsx",
+        "data/raw/hsmm.rds"
     output:
         "data/scesets/scesets.rds"
     shell:

@@ -22,4 +22,4 @@ markers_to_use <- lapply(sce_list_with_pseudotime, function(sce) {
   )
 })
 
-save(markers_to_use, file = "data/marker-vs-txome/markers_to_use.rds")
+saveRDS(markers_to_use, file = "data/marker-vs-txome/markers_to_use.rds")

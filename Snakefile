@@ -5,7 +5,7 @@ Reproducible analysis for Ouija paper
 
 # Configuration --------------
 
-# Benchmarking variables
+# Marker-vs-transcriptome variables
 index = [1,2,3] # Three datasets
 rep = list(range(1,51)) # 50 repetitions
 num_additional_markers = [1,5,10,20,50,100,500,1000] # Number of additional markers
@@ -16,6 +16,13 @@ output_csv = expand("data/marker-vs-txome/ouija_fits/ouija_pseudotime_{i}_{r}_{n
 
 output_de = expand("data/marker-vs-txome/subset_de_fits/sde_fit_{i}_{r}_{nam}.csv",
 			i = index, r = rep, nam = nam_index)
+
+
+# Benchmarking variables 
+Gs = [6,9,12,15]
+condition = ["true", "noninformative"]
+reps = list(range(1,41))
+ouija_csv = expand('data/ouija_{cond}_{G}_{rep}.csv', cond = condition, G = Gs, rep = reps)
 
 
 
@@ -49,7 +56,7 @@ rule construct_scesets:
         "Rscript {R_opts} scripts/create_scesets.R"
 
 
-# Benchmarking --------------------
+# Marker-vs-transcriptome --------------------
 
 rule fit_global_pseudotime:
     input:
@@ -134,3 +141,4 @@ rule graph_pseudotime_subsets:
         "Rscript {R_opts} analysis/marker-vs-txome/09_graph_pseudotime_subsets.R"
 
 
+# Benchmarking switch-like models --------------------

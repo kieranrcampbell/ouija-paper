@@ -38,7 +38,7 @@ if(any(is.na(ouija_pseudotime))) {
     mutate(algorithm = "ouija")
 }
 
-if(any(is.na(sde_tscan))) {
+if(any(is.na(tscan_pseudotime))) {
   sde_tscan <- NULL
 } else {
   sde_tscan <- switchde(sce, tscan_pseudotime) %>% 

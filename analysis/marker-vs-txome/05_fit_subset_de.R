@@ -45,14 +45,27 @@ if(any(is.na(tscan_pseudotime))) {
     mutate(algorithm = "tscan")
 }
 
-sde_monocle <- switchde(sce, monocle_pseudotime) %>% 
-  mutate(algorithm = "monocle")
+if(any(is.na(monocle_pseudotime))) {
+  sde_monocle <- NULL
+} else {
+  sde_monocle <- switchde(sce, monocle_pseudotime) %>% 
+    mutate(algorithm = "monocle")
+}
 
-sde_pc1 <- switchde(sce, pc1_pseudotime) %>% 
-  mutate(algorithm = "pc1")
+if(any(is.na(pc1_pseudotime))) {
+  sde_pc1 <- NULL
+} else {
+  sde_pc1 <- switchde(sce, pc1_pseudotime) %>% 
+    mutate(algorithm = "pc1")
+}
 
-sde_dpt <- switchde(sce, dpt_pseudotime) %>% 
-  mutate(algorithm = "dpt")
+if(any(is.na(dpt_pseudotime))) {
+  sde_dpt <- NULL
+} else {
+  sde_dpt <- switchde(sce, dpt_pseudotime) %>% 
+    mutate(algorithm = "dpt")
+}
+
 
 
 sde <- bind_rows(sde_ouija, sde_tscan, sde_monocle, sde_pc1, sde_dpt) %>% 

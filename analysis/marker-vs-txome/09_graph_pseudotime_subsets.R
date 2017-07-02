@@ -20,7 +20,7 @@ for(i in seq_along(sce_list_with_marker_pseudotime)) {
   for(rep in seq_len(n_reps)) {
     for(nam_index in seq_along(n_additional_markers)) {
       ouija_file <- paste("ouija_pseudotime", i, rep, nam_index, sep = "_")
-      ouija_file_path <- file.path("ouija_fits", paste0(ouija_file, ".csv"))
+      ouija_file_path <- file.path("data", "marker-vs-txome", "ouija_fits", paste0(ouija_file, ".csv"))
       ouija_hmc <- read_csv(ouija_file_path)
       cmats[[i]][rep, nam_index, 3,] <- ouija_hmc$pseudotime
     }

@@ -71,7 +71,7 @@ if(any(is.na(dpt_pseudotime))) {
 sde <- bind_rows(sde_ouija, sde_tscan, sde_monocle, sde_pc1, sde_dpt) %>% 
   select(algorithm, gene, pval)
 
-output_file <- paste0(paste("data/marker-vs-txome/subset_de_fits/sde_fit_", dataset, rep, nam_index, sep = "_"), ".csv")
+output_file <- paste0(paste("data/marker-vs-txome/subset_de_fits/sde_fit", dataset, rep, nam_index, sep = "_"), ".csv")
 
 write_csv(sde, output_file)
 

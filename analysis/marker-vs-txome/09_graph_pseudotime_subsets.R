@@ -5,8 +5,6 @@ library(GGally)
 sce_list_with_marker_pseudotime <- readRDS("data/scesets/scesets_with_marker_pseudotime.rds")
 cmats <- readRDS("data/marker-vs-txome/pseudotimes_across_marker_subset_array.rds")
 
-load("../../data/r1_cmats.Rdata")
-
 n_additional_markers <- c(1,5,10,20,50,100,500,1000)
 n_reps <- 50
 

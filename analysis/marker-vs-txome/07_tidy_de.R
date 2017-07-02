@@ -2,7 +2,9 @@ library(tidyverse)
 library(stringr)
 library(magrittr)
 
-load("../../data/r1_scesets_with_marker_pseudotime.Rdata")
+
+sce_list_with_marker_pseudotime <- readRDS("data/scesets/scesets_with_marker_pseudotime.rds")
+
 datasets <- names(sce_list_with_marker_pseudotime)
 rm(sce_list_with_marker_pseudotime)
 

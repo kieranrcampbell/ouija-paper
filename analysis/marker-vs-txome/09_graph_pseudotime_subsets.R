@@ -73,14 +73,14 @@ ggplot(data = c_tidy, aes(x = n_markers, y = cor, color = algorithm, fill = algo
 
 marker_plot <- last_plot()
 
-marker_plot_line <- group_by(c_tidy, dataset, algorithm, n_markers) %>% 
-  summarise(mean_cor = mean(cor), lower_5 = quantile(cor, 0.05), 
-            upper_95 = quantile(cor, 0.95)) %>% 
-  ggplot(aes(x = n_markers, group = algorithm, y = mean_cor, color = algorithm)) +
-  geom_line() + facet_wrap(~ dataset) +
-  xlab("Number of additional genes") +
-  ylab("Correlation to marker pseudotime") +
-  scale_color_brewer(palette = "Set1", drop = FALSE, name = "Algorithm") 
+# marker_plot_line <- group_by(c_tidy, dataset, algorithm, n_markers) %>% 
+#   summarise(mean_cor = mean(cor), lower_5 = quantile(cor, 0.05), 
+#             upper_95 = quantile(cor, 0.95)) %>% 
+#   ggplot(aes(x = n_markers, group = algorithm, y = mean_cor, color = algorithm)) +
+#   geom_line() + facet_wrap(~ dataset) +
+#   xlab("Number of additional genes") +
+#   ylab("Correlation to marker pseudotime") +
+#   scale_color_brewer(palette = "Set1", drop = FALSE, name = "Algorithm") 
 
 
 
@@ -132,14 +132,14 @@ ggplot(data = g_tidy, aes(x = n_markers, y = cor, color = algorithm, fill = algo
 
 global_plot <- last_plot()
 
-global_plot_line <- group_by(g_tidy, dataset, algorithm, n_markers) %>% 
-  summarise(mean_cor = mean(cor), lower_5 = quantile(cor, 0.05), 
-            upper_95 = quantile(cor, 0.95)) %>% 
-  ggplot(aes(x = n_markers, group = algorithm, y = mean_cor, color = algorithm)) +
-  geom_line() + facet_wrap(~ dataset) +
-  xlab("Number of additional genes") +
-  ylab("Correlation to global pseudotime") +
-  scale_color_brewer(palette = "Set1", drop = FALSE, name = "Algorithm") 
+# global_plot_line <- group_by(g_tidy, dataset, algorithm, n_markers) %>% 
+#   summarise(mean_cor = mean(cor), lower_5 = quantile(cor, 0.05), 
+#             upper_95 = quantile(cor, 0.95)) %>% 
+#   ggplot(aes(x = n_markers, group = algorithm, y = mean_cor, color = algorithm)) +
+#   geom_line() + facet_wrap(~ dataset) +
+#   xlab("Number of additional genes") +
+#   ylab("Correlation to global pseudotime") +
+#   scale_color_brewer(palette = "Set1", drop = FALSE, name = "Algorithm") 
 
 
 
@@ -187,13 +187,13 @@ ggplot(data = w_tidy, aes(x = n_markers, y = correlation, color = algorithm, fil
 
 within_plot <- last_plot()
 
-within_plot_line <- group_by(w_tidy, dataset, algorithm, n_markers) %>% 
-  summarise(mean_cor = mean(correlation)) %>% 
-  ggplot(aes(x = n_markers, group = algorithm, y = mean_cor, color = algorithm)) +
-  geom_line() + facet_wrap(~ dataset) +
-  xlab("Number of additional genes") +
-  ylab("Within algorithm correlation") +
-  scale_color_brewer(palette = "Set1", drop = FALSE, name = "Algorithm") 
+# within_plot_line <- group_by(w_tidy, dataset, algorithm, n_markers) %>% 
+#   summarise(mean_cor = mean(correlation)) %>% 
+#   ggplot(aes(x = n_markers, group = algorithm, y = mean_cor, color = algorithm)) +
+#   geom_line() + facet_wrap(~ dataset) +
+#   xlab("Number of additional genes") +
+#   ylab("Within algorithm correlation") +
+#   scale_color_brewer(palette = "Set1", drop = FALSE, name = "Algorithm") 
 
 
 # Across number of marker correlation -------------------------------------

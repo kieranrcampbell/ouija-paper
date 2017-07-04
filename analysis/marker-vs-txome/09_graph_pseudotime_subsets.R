@@ -37,8 +37,8 @@ cmat_list <- lapply(seq_along(cmats), function(i) {
   class(cmats[[i]]) <- "numeric"
   for(rep in seq_len(n_reps)) {
     for(n_markers in seq_along(n_additional_markers)) {
-      monocle_correlation <- cor(sce$monocle_marker_pseudotime,
-                                 cmats[[i]][rep, n_markers, 1, ])
+      # monocle_correlation <- cor(sce$monocle_marker_pseudotime,
+      #                            cmats[[i]][rep, n_markers, 1, ])
       tscan_correlation <- cor(sce$tscan_marker_pseudotime,
                                  cmats[[i]][rep, n_markers, 2, ], use = "na")
       ouija_correlation <- cor(sce$ouija_pseudotime,
@@ -48,9 +48,9 @@ cmat_list <- lapply(seq_along(cmats), function(i) {
       dpt_correlation <- cor(sce$dpt_marker_pseudotime,
                              cmats[[i]][rep, n_markers, 5, ])
       sdf_ind <- data_frame(dataset = names(sce_list_with_marker_pseudotime)[i],
-                            algorithm = c("Monocle", "TSCAN", "Ouija", "PC1", "DPT"),
+                            algorithm = c("TSCAN", "Ouija", "PC1", "DPT"),
                             rep, n_markers = n_additional_markers[n_markers],
-                            cor = abs(c(monocle_correlation, tscan_correlation,
+                            cor = abs(c(tscan_correlation,
                                     ouija_correlation, pc1_correlation, dpt_correlation)))
       sdf <- rbind(sdf, sdf_ind)
     }
@@ -62,7 +62,7 @@ c_tidy <- bind_rows(cmat_list)
 c_tidy$n_markers <- as.factor(c_tidy$n_markers)
 
 c_tidy$algorithm <- factor(c_tidy$algorithm, levels = c("Ouija", "PC1",
-                                                        "Monocle", "TSCAN", "DPT"))
+                                                        "TSCAN", "DPT"))
 
 ggplot(data = c_tidy, aes(x = n_markers, y = cor, color = algorithm, fill = algorithm)) +
   geom_boxplot() + facet_wrap(~ dataset) +
@@ -94,8 +94,8 @@ gmat_list <- lapply(seq_along(cmats), function(i) {
                     rep = numeric(), n_markers = numeric(), cor = numeric())
   for(rep in seq_len(n_reps)) {
     for(n_markers in seq_along(n_additional_markers)) {
-      monocle_correlation <- cor(sce$monocle_pseudotime,
-                                 cmats[[i]][rep, n_markers, 1, ])
+      # monocle_correlation <- cor(sce$monocle_pseudotime,
+      #                            cmats[[i]][rep, n_markers, 1, ])
       tscan_correlation <- cor(sce$tscan_pseudotime,
                                cmats[[i]][rep, n_markers, 2, ], use = "na")
       ouija_correlation <- cor(sce$ouija_pseudotime,
@@ -105,9 +105,9 @@ gmat_list <- lapply(seq_along(cmats), function(i) {
       dpt_correlation <- cor(sce$dpt_pseudotime,
                              cmats[[i]][rep, n_markers, 5, ])
       sdf_ind <- data_frame(dataset = names(sce_list_with_marker_pseudotime)[i],
-                            algorithm = c("Monocle", "TSCAN", "Ouija", "PC1", "DPT"),
+                            algorithm = c("TSCAN", "Ouija", "PC1", "DPT"),
                             rep, n_markers = n_additional_markers[n_markers],
-                            cor = abs(c(monocle_correlation, tscan_correlation,
+                            cor = abs(c(tscan_correlation,
                                         ouija_correlation, pc1_correlation, dpt_correlation)))
       sdf <- rbind(sdf, sdf_ind)
     }
@@ -118,8 +118,7 @@ gmat_list <- lapply(seq_along(cmats), function(i) {
 g_tidy <- bind_rows(gmat_list)
 g_tidy$n_markers <- as.factor(g_tidy$n_markers)
 
-g_tidy$algorithm <- factor(g_tidy$algorithm, levels = c("Ouija", "PC1",
-                                                                 "Monocle", "TSCAN", "DPT"))
+g_tidy$algorithm <- factor(g_tidy$algorithm, levels = c("Ouija", "PC1", "TSCAN", "DPT"))
 g_tidy <- filter(g_tidy, algorithm != "Ouija")
 
 ggplot(data = g_tidy, aes(x = n_markers, y = cor, color = algorithm, fill = algorithm)) +
@@ -152,13 +151,14 @@ wmat_list <- lapply(seq_along(cmats), function(i) {
 
   for(n_markers in seq_along(n_additional_markers)) {
     # order always monocle-tscan-ouija-pc1
-    matrices <- lapply(1:5, function(alg) {
+    matrices <- lapply(2:5, function(alg) { # Change back to 1:5 if using Monocle
       cor(t(cmats[[i]][, n_markers, alg, ]), use = 'na')
       })
   
     cors <- sapply(matrices, function(mat) abs(mat[lower.tri(mat)]))    
     cors <- as_data_frame(cors)
-    names(cors) <- c("Monocle", "TSCAN", "Ouija", "PC1", "DPT")
+    # names(cors) <- c("Monocle", "TSCAN", "Ouija", "PC1", "DPT")
+    names(cors) <- c("TSCAN", "Ouija", "PC1", "DPT")
     
     sdf_ind <- gather(cors, algorithm, correlation) %>% 
       mutate(n_markers = n_additional_markers[n_markers], 

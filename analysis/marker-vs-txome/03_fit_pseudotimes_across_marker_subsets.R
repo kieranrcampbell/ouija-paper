@@ -17,7 +17,7 @@ sce_list_with_marker_pseudotime <- lapply(sce_list_with_pseudotime, function(sce
   
   sce$pc1_marker_pseudotime <- fit_pc1_pseudotime(sce_marker)
   sce$tscan_marker_pseudotime <- fit_tscan_pseudotime(sce_marker)
-  sce$monocle_marker_pseudotime <- fit_monocle_pseudotime(sce_marker)
+  # sce$monocle_marker_pseudotime <- fit_monocle_pseudotime(sce_marker)
   sce$dpt_marker_pseudotime <- fit_dpt_pseudotime(sce_marker)
   
   return(sce)
@@ -48,7 +48,7 @@ cmats <- lapply(seq_along(sce_list_with_marker_pseudotime), function(i) {
                         markers_to_use[[i]][[rep]][[nam_index]])
       sce_reduced <- sce[genes_to_use,]
       
-      cmat[rep, nam_index, 1, ] <- fit_monocle_pseudotime(sce_reduced)
+      # cmat[rep, nam_index, 1, ] <- fit_monocle_pseudotime(sce_reduced)
       cmat[rep, nam_index, 2, ] <- fit_tscan_pseudotime(sce_reduced)
       
       ## Need to set the ouija priors

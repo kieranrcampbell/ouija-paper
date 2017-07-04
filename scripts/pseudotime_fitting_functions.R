@@ -34,10 +34,10 @@ fit_monocle_pseudotime <- function(sce) {
   return(cds$Pseudotime)
 }
 
-fit_tscan_pseudotime <- function(sce) {
+fit_tscan_pseudotime <- function(sce, clusternum = 5) {
   tscan_pseudotime <- rep(NA, ncol(sce))
   
-  cl_data <- tryCatch(exprmclust(exprs(sce)),
+  cl_data <- tryCatch(exprmclust(exprs(sce), clusternum = clusternum),
                       error = function(e) {
                         message("TSCAN failed")
                         return(NA)

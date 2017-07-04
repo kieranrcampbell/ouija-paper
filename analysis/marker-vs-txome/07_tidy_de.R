@@ -14,14 +14,15 @@ alpha <- 0.05
 ## Parse the txwide and marker results
 txwide_marker <- read_csv("txwide_marker_de.csv")
 
-pseudotime_str <- c("monocle_pseudotime", "tscan_pseudotime",
+pseudotime_str <- c(# "monocle_pseudotime", 
+                    "tscan_pseudotime",
                     "ouija_pseudotime", "pc1_pseudotime",
                     "dpt_pseudotime", "pc1_marker_pseudotime",
-                    "tscan_marker_pseudotime", "monocle_marker_pseudotime",
+                    "tscan_marker_pseudotime", # "monocle_marker_pseudotime",
                     "dpt_marker_pseudotime")
 
 pseudotime_comparisons <- list(
-  monocle = c("monocle_pseudotime", "monocle_marker_pseudotime"),
+  # monocle = c("monocle_pseudotime", "monocle_marker_pseudotime"),
   tscan = c("tscan_pseudotime", "tscan_marker_pseudotime"),
   ouija = c("ouija_pseudotime"),
   pc1 = c("pc1_pseudotime", "pc1_marker_pseudotime"),

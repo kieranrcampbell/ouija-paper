@@ -13,10 +13,11 @@ sce_list_with_marker_pseudotime <- readRDS("data/scesets/scesets_with_marker_pse
 all_dataset_de <- lapply(1:3, function(dset) {
   sce <- sce_list_with_marker_pseudotime[[dset]]
   
-  pseudotime_str <- c("monocle_pseudotime", "tscan_pseudotime",
+  pseudotime_str <- c(# "monocle_pseudotime", 
+                      "tscan_pseudotime",
                       "ouija_pseudotime", "pc1_pseudotime",
                       "dpt_pseudotime", "pc1_marker_pseudotime",
-                      "tscan_marker_pseudotime", "monocle_marker_pseudotime",
+                      "tscan_marker_pseudotime", # "monocle_marker_pseudotime",
                       "dpt_marker_pseudotime")
   
   de_fits <- lapply(pseudotime_str, function(pst_str) {

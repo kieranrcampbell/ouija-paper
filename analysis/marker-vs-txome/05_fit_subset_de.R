@@ -26,7 +26,7 @@ ouija_hmc <- read_csv(ouija_file_path)
 ouija_pseudotime <- ouija_hmc$pseudotime
 
 
-monocle_pseudotime <- cmats[[dataset]][rep, nam_index, 1, ]
+# monocle_pseudotime <- cmats[[dataset]][rep, nam_index, 1, ]
 tscan_pseudotime <- cmats[[dataset]][rep, nam_index, 2, ]
 pc1_pseudotime <- cmats[[dataset]][rep, nam_index, 4, ]
 dpt_pseudotime <- cmats[[dataset]][rep, nam_index, 5, ]
@@ -45,12 +45,12 @@ if(any(is.na(tscan_pseudotime))) {
     mutate(algorithm = "tscan")
 }
 
-if(any(is.na(monocle_pseudotime))) {
-  sde_monocle <- NULL
-} else {
-  sde_monocle <- switchde(sce, monocle_pseudotime) %>% 
-    mutate(algorithm = "monocle")
-}
+# if(any(is.na(monocle_pseudotime))) {
+#   sde_monocle <- NULL
+# } else {
+#   sde_monocle <- switchde(sce, monocle_pseudotime) %>% 
+#     mutate(algorithm = "monocle")
+# }
 
 if(any(is.na(pc1_pseudotime))) {
   sde_pc1 <- NULL
@@ -68,7 +68,7 @@ if(any(is.na(dpt_pseudotime))) {
 
 
 
-sde <- bind_rows(sde_ouija, sde_tscan, sde_monocle, sde_pc1, sde_dpt) %>% 
+sde <- bind_rows(sde_ouija, sde_tscan, sde_pc1, sde_dpt) %>% 
   select(algorithm, gene, pval)
 
 output_file <- paste0(paste("data/marker-vs-txome/subset_de_fits/sde_fit", dataset, rep, nam_index, sep = "_"), ".csv")

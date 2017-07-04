@@ -96,8 +96,13 @@ gmat_list <- lapply(seq_along(cmats), function(i) {
     for(n_markers in seq_along(n_additional_markers)) {
       # monocle_correlation <- cor(sce$monocle_pseudotime,
       #                            cmats[[i]][rep, n_markers, 1, ])
-      tscan_correlation <- cor(sce$tscan_pseudotime,
-                               cmats[[i]][rep, n_markers, 2, ], use = "na")
+      
+      if(all(is.na(na_vec))) {
+        tscan_correlation <- NA
+      } else {
+        tscan_correlation <- cor(sce$tscan_pseudotime,
+                                 cmats[[i]][rep, n_markers, 2, ], use = "na")
+      }
       ouija_correlation <- cor(sce$ouija_pseudotime,
                                cmats[[i]][rep, n_markers, 3, ])
       pc1_correlation <- cor(sce$pc1_pseudotime,

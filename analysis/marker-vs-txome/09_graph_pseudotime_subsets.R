@@ -2,6 +2,14 @@ library(scater)
 library(tidyverse)
 library(GGally)
 
+
+cor_handle_na <- function(x, y) {
+  if(!is.numeric(x) | !is.numeric(y)) return(NA)
+  if(all(is.na(x))) return(NA)
+  if(all(is.na(y))) return(NA)
+  cor(x, y, use = NA)
+}
+
 sce_list_with_marker_pseudotime <- readRDS("data/scesets/scesets_with_marker_pseudotime.rds")
 cmats <- readRDS("data/marker-vs-txome/pseudotimes_across_marker_subset_array.rds")
 
@@ -39,13 +47,13 @@ cmat_list <- lapply(seq_along(cmats), function(i) {
     for(n_markers in seq_along(n_additional_markers)) {
       # monocle_correlation <- cor(sce$monocle_marker_pseudotime,
       #                            cmats[[i]][rep, n_markers, 1, ])
-      tscan_correlation <- cor(sce$tscan_marker_pseudotime,
-                                 cmats[[i]][rep, n_markers, 2, ], use = "na")
-      ouija_correlation <- cor(sce$ouija_pseudotime,
+      tscan_correlation <- cor_handle_na(sce$tscan_marker_pseudotime,
+                                 cmats[[i]][rep, n_markers, 2, ])
+      ouija_correlation <- cor_handle_na(sce$ouija_pseudotime,
                                  cmats[[i]][rep, n_markers, 3, ])
-      pc1_correlation <- cor(sce$pc1_marker_pseudotime,
+      pc1_correlation <- cor_handle_na(sce$pc1_marker_pseudotime,
                                  cmats[[i]][rep, n_markers, 4, ])
-      dpt_correlation <- cor(sce$dpt_marker_pseudotime,
+      dpt_correlation <- cor_handle_na(sce$dpt_marker_pseudotime,
                              cmats[[i]][rep, n_markers, 5, ])
       sdf_ind <- data_frame(dataset = names(sce_list_with_marker_pseudotime)[i],
                             algorithm = c("TSCAN", "Ouija", "PC1", "DPT"),
@@ -97,17 +105,13 @@ gmat_list <- lapply(seq_along(cmats), function(i) {
       # monocle_correlation <- cor(sce$monocle_pseudotime,
       #                            cmats[[i]][rep, n_markers, 1, ])
       
-      if(all(is.na(cmats[[i]][rep, n_markers, 2, ])) | !is.numeric(cmats[[i]][rep, n_markers, 2, ])) {
-        tscan_correlation <- NA
-      } else {
-        tscan_correlation <- cor(sce$tscan_pseudotime,
-                                 cmats[[i]][rep, n_markers, 2, ], use = "na")
-      }
-      ouija_correlation <- cor(sce$ouija_pseudotime,
+      tscan_correlation <- cor_handle_na(sce$tscan_pseudotime,
+                                 cmats[[i]][rep, n_markers, 2, ])
+      ouija_correlation <- cor_handle_na(sce$ouija_pseudotime,
                                cmats[[i]][rep, n_markers, 3, ])
-      pc1_correlation <- cor(sce$pc1_pseudotime,
+      pc1_correlation <- cor_handle_na(sce$pc1_pseudotime,
                              cmats[[i]][rep, n_markers, 4, ])
-      dpt_correlation <- cor(sce$dpt_pseudotime,
+      dpt_correlation <- cor_handle_na(sce$dpt_pseudotime,
                              cmats[[i]][rep, n_markers, 5, ])
       sdf_ind <- data_frame(dataset = names(sce_list_with_marker_pseudotime)[i],
                             algorithm = c("TSCAN", "Ouija", "PC1", "DPT"),

@@ -97,7 +97,7 @@ gmat_list <- lapply(seq_along(cmats), function(i) {
       # monocle_correlation <- cor(sce$monocle_pseudotime,
       #                            cmats[[i]][rep, n_markers, 1, ])
       
-      if(all(is.na(cmats[[i]][rep, n_markers, 2, ]))) {
+      if(all(is.na(cmats[[i]][rep, n_markers, 2, ])) | !is.numeric(cmats[[i]][rep, n_markers, 2, ])) {
         tscan_correlation <- NA
       } else {
         tscan_correlation <- cor(sce$tscan_pseudotime,

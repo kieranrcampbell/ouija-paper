@@ -64,6 +64,7 @@ cmats <- lapply(seq_along(sce_list_with_marker_pseudotime), function(i) {
     }
   }
   
+  mode(cmat) <- "numeric"
   return(cmat)
   
 })

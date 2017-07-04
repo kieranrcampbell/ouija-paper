@@ -161,7 +161,11 @@ wmat_list <- lapply(seq_along(cmats), function(i) {
   for(n_markers in seq_along(n_additional_markers)) {
     # order always monocle-tscan-ouija-pc1
     matrices <- lapply(2:5, function(alg) { # Change back to 1:5 if using Monocle
-      cor(t(cmats[[i]][, n_markers, alg, ]), use = 'na')
+      cm <- t(cmats[[i]][, n_markers, alg, ])
+        if(!is.numeric(cm)) {
+          stop(paste("Not numeric", i, n_markers, alg))
+        }
+      cor(cm, use = 'na')
       })
   
     cors <- sapply(matrices, function(mat) abs(mat[lower.tri(mat)]))    

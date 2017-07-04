@@ -9,6 +9,7 @@ library(ouija)
 fit_monocle_pseudotime <- function(sce) {
   cds <- toCellDataSet(sce)
   cds <- setOrderingFilter(cds, ordering_genes = featureNames(sce))
+  sizeFactors(cds) <- rep(1, ncol(cds))
   cds <- tryCatch(reduceDimension(cds, norm_method = "none"),
                   error = function(e) {
                     message("Monocle dimensionality reduction failed")

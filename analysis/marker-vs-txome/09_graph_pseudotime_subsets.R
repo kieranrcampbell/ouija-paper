@@ -175,8 +175,10 @@ wmat_list <- lapply(seq_along(cmats), function(i) {
 w_tidy <- bind_rows(wmat_list)
 w_tidy$n_markers <- as.factor(w_tidy$n_markers)
 
+# w_tidy$algorithm <- factor(w_tidy$algorithm, levels = c("Ouija", "PC1",
+#                                                         "Monocle", "TSCAN", "DPT"))
 w_tidy$algorithm <- factor(w_tidy$algorithm, levels = c("Ouija", "PC1",
-                                                        "Monocle", "TSCAN", "DPT"))
+                                                        "TSCAN", "DPT"))
 
 ggplot(data = w_tidy, aes(x = n_markers, y = correlation, color = algorithm, fill = algorithm)) +
   geom_boxplot() + facet_wrap(~ dataset) +
@@ -204,7 +206,7 @@ amat_list <- lapply(seq_along(cmats), function(i) {
                     dataset = character())
   
   # order always monocle-tscan-ouija-pc1
-  cor_matrices <- sapply(1:5, function(alg) {
+  cor_matrices <- sapply(2:5, function(alg) {
     marray <- cmats[[i]][, , alg, ]
     xc <- apply(marray, 1, function(m) {
       cor_mat <- cor(t(m), use = "na")
@@ -214,7 +216,8 @@ amat_list <- lapply(seq_along(cmats), function(i) {
   })
   
   cor_matrices <- as_data_frame(cor_matrices)
-  names(cor_matrices) <- c("monocle", "tscan", "ouija", "pc1", "dpt")
+  # names(cor_matrices) <- c("monocle", "tscan", "ouija", "pc1", "dpt")
+  names(cor_matrices) <- c("tscan", "ouija", "pc1", "dpt")
   
   sdf_ind <- gather(cor_matrices, algorithm, correlation) %>% 
     mutate(dataset = names(sce_list_with_marker_pseudotime)[i])
@@ -226,8 +229,10 @@ amat_list <- lapply(seq_along(cmats), function(i) {
 
 a_tidy <- bind_rows(amat_list)
 
+# a_tidy$algorithm <- factor(a_tidy$algorithm, levels = c("ouija", "pc1",
+#                                                         "monocle", "tscan", "dpt"))
 a_tidy$algorithm <- factor(a_tidy$algorithm, levels = c("ouija", "pc1",
-                                                        "monocle", "tscan", "dpt"))
+                                                        "tscan", "dpt"))
 
 ggplot(data = a_tidy, aes(x = algorithm, y = correlation, fill = algorithm)) +
   geom_boxplot() + facet_wrap(~ dataset) +

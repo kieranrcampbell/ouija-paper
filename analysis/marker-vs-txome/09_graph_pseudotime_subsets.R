@@ -7,7 +7,7 @@ cor_handle_na <- function(x, y) {
   if(!is.numeric(x) | !is.numeric(y)) return(NA)
   if(all(is.na(x))) return(NA)
   if(all(is.na(y))) return(NA)
-  cor(x, y, use = NA)
+  cor(x, y, use = "na")
 }
 
 sce_list_with_marker_pseudotime <- readRDS("data/scesets/scesets_with_marker_pseudotime.rds")

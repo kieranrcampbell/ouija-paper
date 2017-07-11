@@ -33,6 +33,7 @@ for(i in seq_along(sce_list_with_marker_pseudotime)) {
       cmats[[i]][rep, nam_index, 3,] <- ouija_hmc$pseudotime
     }
   }
+  mode(cmats[[i]]) <- "numeric"
 }
 
 

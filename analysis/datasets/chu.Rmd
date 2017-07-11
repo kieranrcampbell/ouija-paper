@@ -1,0 +1,122 @@
+---
+title: "Chu analysis for Ouija"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+Load libraries and sceset:
+
+```{r, load-libraries}
+set.seed(942)
+
+knitr::opts_chunk$set(fig.width = 5, fig.height = 4, cache = TRUE)
+
+suppressPackageStartupMessages(library(scater))
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(dpt))
+devtools::load_all("~/oxford/bnlfa/oui/ouija")
+
+sce <- readRDS("../../data/scesets/chu-sce.rds")
+print(sce)
+```
+
+# Analysis with Ouija
+
+## Exploratory analysis
+
+Get marker genes - first 9 are switch-like, final 2 are transient
+
+```{r}
+markers <- c("POU5F1", "NANOG", "SOX2", "EOMES", "CER1", "GATA4", "DKK4",
+             "MYCT1", "PRDM1", "CDX1", "MSX2")
+response_types <- c(rep("switch", 9), rep("transient", 2))
+```
+
+Create a marker sceset:
+
+```{r}
+sce_marker <- sce[markers, ]
+print(sce_marker)
+```
+
+Have a look at PCA of top 500 most variable (scater default) and markers only:
+
+```{r, fig.show = 'hold', fig.height = 3, fig.width = 4}
+plotPCA(sce, colour_by = 'capture_time')
+plotPCA(sce_marker, colour_by = 'capture_time')
+```
+
+
+## Fitting pseudotimes
+
+We'll call Ouija (using VB for now), with fairly diffuse switching priors
+
+```{r, message = FALSE, warning = FALSE, results = 'hide'}
+oui <- ouija(sce_marker, response_types, iter = 3000,
+             strength_sd = rep(5, 9))
+```
+
+Quick diagnostic to check things are mostly ok:
+
+```{r}
+plot(oui, what = 'diagnostic')
+```
+
+Plot the gene output:
+
+```{r, fig.width = 6, fig.height = 5}
+plot_expression(oui)
+```
+
+Plot the switch times:
+
+```{r}
+plot_switch_times(oui)
+```
+
+Plot the peak times
+
+```{r, fig.width = 3, fig.height = 2}
+plot_transient_times(oui)
+```
+
+
+
+## Comparison of discrete cell types
+
+We can construct the confusion matrix to find discrete cell types:
+
+```{r}
+cmat <- confusion_matrix(oui)
+cmo <- confusion_matrix_ordered(oui, cmat)
+plot_confusion(oui, cmo)
+```
+
+And cluster it to find cell types
+
+```{r}
+sce_marker$cluster <- factor(cluster_confusion(cmat))
+```
+
+How many optimal clusters were found?
+
+```{r}
+length(unique(sce_marker$cluster))
+
+```
+
+And plot in pca space:
+
+```{r}
+plotPCA(sce_marker, colour_by = 'cluster')
+```
+
+How do these clusters compare to the capture time?
+
+```{r}
+print(table(sce_marker$capture_time, sce_marker$cluster))
+```
+
+
+

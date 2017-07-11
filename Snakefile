@@ -1,5 +1,7 @@
 """
 Reproducible analysis for Ouija paper
+
+export PATH=$PATH:/Applications/RStudio.app/Contents/MacOS/pandoc
 """
 
 
@@ -46,6 +48,24 @@ rule read_hsc:
     shell:
         "Rscript {R_opts} scripts/read-hsc.R"
 
+rule create_chu:
+    output:
+        "data/scesets/chu-sce.rds"
+    shell:
+        "Rscript {R_opts} scripts/read-chu.R"
+
+rule create_dulken:
+    output:
+        "data/scesets/dulken-sce.rds"
+    shell:
+        "Rscript {R_opts} scripts/read-dulken.R"
+
+rule create_li:
+    output:
+        "data/scesets/li-sce.rds"
+    shell:
+        "Rscript {R_opts} scripts/read-li.R"
+
 rule construct_scesets:
     input:
         "data/scesets/hsc-sce.rds",
@@ -56,6 +76,15 @@ rule construct_scesets:
     shell:
         "Rscript {R_opts} scripts/create_scesets.R"
 
+# Analyses ------
+
+rule dulken_analysis:
+    input:
+        "data/scesets/dulken-sce.rds"
+    output:
+        "analysis/datasets/dulken.html"
+    shell:
+        "Rscript -e \"rmarkdown::render('analysis/datasets/dulken.Rmd')\""
 
 # Marker-vs-transcriptome --------------------
 

@@ -1,0 +1,5 @@
+*.html
+*_cache*
+*_files*
+*.history
+*.pdf

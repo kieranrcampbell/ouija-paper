@@ -1,5 +1,5 @@
 ---
-title: "Chu analysis for Ouija"
+title: "Dulken analysis for Ouija"
 output:
   html_document: default
   html_notebook: default
@@ -14,11 +14,11 @@ knitr::opts_chunk$set(fig.width = 5, fig.height = 4, cache = TRUE)
 
 suppressPackageStartupMessages(library(scater))
 suppressPackageStartupMessages(library(ggplot2))
+
+
 devtools::load_all("~/oxford/bnlfa/oui/ouija")
 
-
-
-sce <- readRDS("../../data/scesets/chu-sce.rds")
+sce <- readRDS("../../data/scesets/dulken-sce.rds")
 print(sce)
 ```
 
@@ -29,9 +29,8 @@ print(sce)
 Get marker genes - first 9 are switch-like, final 2 are transient
 
 ```{r}
-markers <- c("POU5F1", "NANOG", "SOX2", "EOMES", "CER1", "GATA4", "DKK4",
-             "MYCT1", "PRDM1", "CDX1", "MSX2")
-response_types <- c(rep("switch", 9), rep("transient", 2))
+markers <- c("Id3", "Clu", "Rpl32", "Egfr",
+             "Cdk4", "Cdk1", "Dlx2", "Dcx")
 ```
 
 Create a marker sceset:
@@ -44,8 +43,8 @@ print(sce_marker)
 Have a look at PCA of top 500 most variable (scater default) and markers only:
 
 ```{r, fig.show = 'hold', fig.height = 3, fig.width = 4}
-plotPCA(sce, colour_by = 'capture_time')
-plotPCA(sce_marker, colour_by = 'capture_time')
+plotPCA(sce, colour_by = 'cell_type')
+plotPCA(sce_marker, colour_by = 'cell_type')
 ```
 
 
@@ -54,8 +53,8 @@ plotPCA(sce_marker, colour_by = 'capture_time')
 We'll call Ouija (using VB for now), with fairly diffuse switching priors
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
-oui <- ouija(sce_marker, response_types, iter = 3000,
-             strength_sd = rep(5, 9))
+oui <- ouija(sce_marker, iter = 3000,
+             strength_sd = rep(5, 8))
 ```
 
 Quick diagnostic to check things are mostly ok:
@@ -76,11 +75,6 @@ Plot the switch times:
 plot_switch_times(oui)
 ```
 
-Plot the peak times
-
-```{r, fig.width = 3, fig.height = 2}
-plot_transient_times(oui)
-```
 
 
 
@@ -104,7 +98,6 @@ How many optimal clusters were found?
 
 ```{r}
 length(unique(sce_marker$cluster))
-
 ```
 
 And plot in pca space:
@@ -116,9 +109,8 @@ plotPCA(sce_marker, colour_by = 'cluster')
 How do these clusters compare to the capture time?
 
 ```{r}
-print(table(sce_marker$capture_time, sce_marker$cluster))
+print(table(droplevels(sce_marker$cell_type), sce_marker$cluster))
 ```
-
 
 
 # Comparison with other pseudotime methods
@@ -130,22 +122,16 @@ sce_highvar <- sce[gene_vars > cutoff, ]
 ```
 
 ```{r}
-unloadNamespace("scater")
-unloadNamespace("edgeR")
-R.utils::gcDLLs()
-```
-
-```{r}
 source("../../scripts/pseudotime_fitting_functions.R")
 dpt_highvar <- fit_dpt_pseudotime(sce_highvar)
 tscan_highvar <- fit_tscan_pseudotime(sce_highvar)
 monocle_highvar <- fit_monocle_pseudotime(sce_highvar)
 
-
 d <- data.frame(dpt_highvar_genes = dpt_highvar, monocle_highvar_genes = monocle_highvar,
            ouija_markers = map_pseudotime(oui), 
            tscan_highvar_genes = tscan_highvar)
 GGally::ggpairs(d)
+
 ```
 
 ```{r}
@@ -157,7 +143,6 @@ df_cor <- data.frame(
 )
 ```
 
-Find the max cor amongs the other algos:
 
 ```{r}
 cors <- c(
@@ -169,9 +154,7 @@ df_cor$max_cor <- max(abs(cors))
 ```
 
 
-
 ```{r}
-readr::write_csv(df_cor, "../../data/mvt_csv/chu.csv")
+readr::write_csv(df_cor, "../../data/mvt_csv/dulken.csv")
 
 ```
-

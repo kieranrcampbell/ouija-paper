@@ -1,0 +1,290 @@
+---
+title: "Trapnell analysis for Ouija"
+output:
+  html_document: default
+  html_notebook: default
+---
+
+Load libraries and sceset:
+
+```{r, load-libraries}
+set.seed(942)
+
+knitr::opts_chunk$set(fig.width = 5, fig.height = 4, cache = TRUE)
+
+suppressPackageStartupMessages(library(scater))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(tidyr))
+suppressPackageStartupMessages(library(dplyr))
+devtools::load_all("~/oxford/bnlfa/oui/ouija")
+
+source("../../scripts/pseudotime_fitting_functions.R")
+
+sce_list <- readRDS("../../data/scesets_with_marker_pseudotime.rds")
+sce <- sce_list[['trapnell']]
+print(sce)
+```
+
+# Analysis with Ouija
+
+## Exploratory analysis
+
+
+
+Create a marker sceset:
+
+```{r}
+sce_marker <- sce[fData(sce)$is_marker, ]
+print(sce_marker)
+```
+
+Have a look at PCA of top 500 most variable (scater default) and markers only. We don't have any additional phenotype data, but the authors note that pseudotime tracks Col10a expression:
+
+```{r, fig.show = 'hold', fig.height = 3, fig.width = 4}
+plotPCA(sce, colour_by = 'Hours')
+plotPCA(sce_marker, colour_by = 'Hours')
+```
+
+
+## Fitting pseudotimes
+
+We'll call Ouija (using VB for now), with fairly diffuse switching priors
+
+```{r, message = FALSE, warning = FALSE, results = 'hide'}
+oui <- ouija(sce_marker, iter = 3000, 
+             strength_sd = rep(5, 5))
+```
+
+Quick diagnostic to check things are mostly ok:
+
+```{r}
+plot(oui, what = 'diagnostic')
+```
+
+
+
+
+Plot the gene output:
+
+```{r, fig.width = 6, fig.height = 5}
+plot_expression(oui)
+```
+
+Plot the switch times:
+
+```{r}
+plot_switch_times(oui)
+```
+
+
+
+
+## Comparison of discrete cell types
+
+We can construct the confusion matrix to find discrete cell types:
+
+```{r}
+cmat <- confusion_matrix(oui)
+cmo <- confusion_matrix_ordered(oui, cmat)
+plot_confusion(oui, cmo)
+```
+
+And cluster it to find cell types
+
+```{r}
+sce_marker$cluster <- factor(cluster_confusion(cmat))
+```
+
+How many optimal clusters were found?
+
+```{r}
+length(unique(sce_marker$cluster))
+```
+
+And plot in pca space:
+
+```{r}
+plotPCA(sce_marker, colour_by = 'cluster')
+```
+
+
+Comparison with other pseudotime methods
+
+```{r}
+gene_vars <- matrixStats::rowVars(exprs(sce))
+cutoff <- sort(gene_vars, decreasing = TRUE)[501]
+sce_highvar <- sce[gene_vars > cutoff, ]
+```
+
+```{r}
+dpt_highvar <- fit_dpt_pseudotime(sce_highvar)
+tscan_highvar <- fit_tscan_pseudotime(sce_highvar)
+
+d <- data.frame(original_monocle = sce$Pseudotime, dpt_highvar_genes = dpt_highvar,
+           ouija_markers = map_pseudotime(oui), 
+           tscan_highvar_genes = tscan_highvar)
+GGally::ggpairs(d)
+```
+
+```{r}
+ouija_pst <- map_pseudotime(oui)
+df_cor <- data.frame(
+  monocle = cor(d$original_monocle, ouija_pst),
+  dpt = cor(d$dpt_highvar_genes, ouija_pst),
+  tscan = cor(d$tscan_highvar_genes, ouija_pst)
+)
+```
+
+Find the max cor amongs the other algos:
+
+```{r}
+cors <- c(
+  cor(d$original_monocle, d$dpt_highvar_genes),
+  cor(d$dpt_highvar_genes, d$tscan_highvar_genes),
+  cor(d$original_monocle, d$tscan_highvar_genes)
+)
+df_cor$max_cor <- max(abs(cors))
+```
+
+
+
+```{r}
+readr::write_csv(df_cor, "../../data/mvt_csv/trapnell.csv")
+
+```
+
+# Comparison of gene fits
+
+Construct expression df
+
+```{r}
+example_genes <- c("MYOG", "ID1")
+example_inds <- match(example_genes, fData(sce_marker)$gene_short_name)
+expr <- oui$Y[, example_inds]
+colnames(expr) <- example_genes
+```
+
+
+First sanitize d
+
+```{r}
+scale_to_unif <- function(x) (x - min(x)) / (max(x) - min(x)) # scale to lie in [0, 1]
+d2 <- as_data_frame(d)
+d2 <- apply(d2, 2, scale_to_unif) 
+
+## Correlations with MYOG - flip if negative
+cors_with_myog <- apply(d2, 2, cor, expr[,1])
+d2[, cors_with_myog < 0] <- 1 - d2[, cors_with_myog < 0]
+d2 <- as_data_frame(d2)
+```
+
+
+
+```{r}
+
+expr_df <- cbind(expr, d2)
+
+map_from <- colnames(d2)
+map_to <- c("Monocle (original)", "DPT", "Ouija (markers)", "TSCAN")
+
+expr_df_tidy1 <- gather(expr_df, algorithm, pseudotime, -MYOG, -ID1)
+expr_df_tidy2 <- gather(expr_df_tidy1, gene, expression, -algorithm, -pseudotime)
+expr_df_tidy2$algorithm <- plyr::mapvalues(expr_df_tidy2$algorithm, from = map_from, to = map_to)
+expr_df_tidy2 <- as_data_frame(expr_df_tidy2)
+
+filter(expr_df_tidy2, !grepl("Ouija", algorithm)) %>% 
+  ggplot(aes(x = pseudotime, y = expression)) +
+    geom_point(shape = 21, color = 'black', fill = 'grey70') +
+    facet_grid(algorithm ~ gene) +
+    labs(x = "Pseudotime", y = "Normalised expression") +
+    stat_smooth(se = F, color = 'darkred') +
+  scale_y_continuous() +
+  theme(strip.background = element_rect(colour="white", fill="white")) +
+  theme(axis.title = element_text(size = 9))
+
+algorithm_plot <- last_plot()
+```
+
+Now do Ouija separately
+
+```{r}
+pred_expr <- predicted_expression(oui)[, example_inds]
+colnames(pred_expr) <- example_genes
+pred_expr <-  as_data_frame(pred_expr) %>% 
+  mutate(pseudotime = d2[['ouija_markers']], algorithm = "Ouija (markers)") %>% 
+  gather(gene, expression, -pseudotime, -algorithm)
+
+pred_expr <- arrange(pred_expr, pseudotime)
+
+filter(expr_df_tidy2, grepl("Ouija", algorithm)) %>% 
+  ggplot(aes(x = pseudotime, y = expression)) +
+    geom_point(shape = 21, color = 'black', fill = 'grey70') +
+    facet_grid(algorithm ~ gene) +
+    labs(x = "Pseudotime", y = "Normalised expression") +
+  theme(strip.background = element_rect(colour="white", fill="white")) +
+  theme(axis.title = element_text(size = 9))
+
+base_plot <- last_plot()
+
+sample_tidy <- function() {
+  expr_samples <- sample_predicted_expression(oui)[, example_inds]
+  colnames(expr_samples) <- example_genes
+  expr_samples <-  as_data_frame(expr_samples) %>% 
+  mutate(pseudotime = d2[['ouija_markers']], algorithm = "Ouija (markers)") %>% 
+  gather(gene, expression, -pseudotime, -algorithm)
+  expr_samples <- arrange(expr_samples, pseudotime)
+  expr_samples
+}
+
+for(i in 1:40) base_plot <- base_plot + geom_line(data = sample_tidy(), alpha = 0.3)
+plt <- base_plot + geom_line(data = pred_expr, color = 'darkred', size = 1.2)
+
+```
+
+Overall plot:
+
+```{r}
+cowplot::plot_grid(plt, algorithm_plot, labels = c("A", "B"),
+                   rel_heights = c(1,2.2), ncol = 1, label_size = 12)
+```
+
+
+Correlation figure
+
+
+```{r}
+ecor <- cor(t(exprs(sce_highvar)))
+png(file.path(tempdir(), "heatmap.png"))
+hmap <- heatmap.2(ecor, trace = 'none', col = "viridis", dendrogram = "none")
+dev.off()
+```
+
+Now do it nicely in ggplot:
+
+
+```{r}
+ecor_reordered <- ecor[hmap$rowInd, hmap$colInd]
+
+## Where are our markers?
+marker_df <- data_frame(markers = fData(sce_highvar)[['gene_short_name']][fData(sce_highvar)[['is_marker']]],
+                        index = which(fData(sce_highvar)[['is_marker']]))
+match(marker_df$index, hmap$rowInd)
+```
+
+```{r}
+diag(ecor_reordered) <- NA
+er <- as_data_frame(ecor_reordered)
+names(er) <- seq_len(ncol(er))
+er$row <- seq_len(nrow(er))
+er_tidy <- gather(er, column, correlation, -row)
+er_tidy$column <- as.integer(er_tidy$column)
+
+pal <- viridis_pal()(9)
+
+ggplot(er_tidy, aes(x = row, y = column, fill = correlation)) +
+  geom_raster() + #scale_fill_gradient2(low = pal[1], mid = pal[5], high = pal[9])
+  scale_fill_viridis(option = "C", name = "Correlation") +
+  theme_void() +
+  theme(legend.position = 'top')
+```
+

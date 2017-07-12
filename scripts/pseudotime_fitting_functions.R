@@ -1,18 +1,14 @@
-
+suppressPackageStartupMessages(library(monocle))
 # Pseudotime libraries
-library(dpt)
-library(monocle)
-library(TSCAN)
-library(ouija)
 
-
-fit_monocle_pseudotime <- function(sce) {
+fit_monocle_pseudotime <- function(sce, ncenter = NULL) {
+  fData(sce)$gene_short_name <- featureNames(sce)
   cds <- toCellDataSet(sce)
-  cds <- setOrderingFilter(cds, ordering_genes = featureNames(sce))
+  cds <- monocle::setOrderingFilter(cds, ordering_genes = featureNames(sce))
   sizeFactors(cds) <- rep(1, ncol(cds))
-  cds <- tryCatch(reduceDimension(cds, norm_method = "none"),
+  cds <- tryCatch(monocle::reduceDimension(cds, norm_method = "none", pseudo_expr = 0, ncenter = ncenter),
                   error = function(e) {
-                    message("Monocle dimensionality reduction failed")
+                    message("Monocle dimensionality reduction failed: ", e)
                     return(NA)
                   })
   if(!is(cds, "CellDataSet")) {
@@ -21,7 +17,7 @@ fit_monocle_pseudotime <- function(sce) {
     }
   }
   
-  cds <- tryCatch(orderCells(cds, num_paths = 1),
+  cds <- tryCatch(monocle::orderCells(cds, num_paths = 1),
                   error = function(e) {
                     message("Monocle ordering failed")
                     return(NA)
@@ -31,15 +27,17 @@ fit_monocle_pseudotime <- function(sce) {
       return(rep(NA, ncol(sce)))
     }
   }
+  unloadNamespace("monocle")
+  R.utils::gcDLLs()
   return(cds$Pseudotime)
 }
 
 fit_tscan_pseudotime <- function(sce, clusternum = 5) {
   tscan_pseudotime <- rep(NA, ncol(sce))
   
-  cl_data <- tryCatch(exprmclust(exprs(sce), clusternum = clusternum),
+  cl_data <- tryCatch(TSCAN::exprmclust(exprs(sce), clusternum = clusternum),
                       error = function(e) {
-                        message("TSCAN failed")
+                        message("TSCAN failed (clustering) ", e)
                         return(NA)
                       })
   
@@ -49,9 +47,9 @@ fit_tscan_pseudotime <- function(sce, clusternum = 5) {
     }
   }
   
-  tscan_order <- tryCatch(TSCANorder(cl_data, orderonly = FALSE),
+  tscan_order <- tryCatch(TSCAN::TSCANorder(cl_data, orderonly = FALSE),
                           error = function(e) {
-                            message("TSCAN failed")
+                            message("TSCAN failed (ordering) ", e)
                             return(rep(NA, ncol(sce)))
                           })
   
@@ -60,6 +58,8 @@ fit_tscan_pseudotime <- function(sce, clusternum = 5) {
   
   tscan_cell_inds <- match(tscan_order$sample_name, sampleNames(sce))
   tscan_pseudotime[tscan_cell_inds] <- tscan_order$Pseudotime
+  unloadNamespace("TSCAN")
+  R.utils::gcDLLs()
   return( tscan_pseudotime )
 }
 
@@ -111,8 +111,10 @@ fit_dpt_pseudotime <- function(sce) {
   gene_collapse_sd <- 1e-6 * gene_sds
   new_exprs <- apply(exprs(sce), 2, function(x) rnorm(length(x), x, gene_collapse_sd))
   
-  ts <- Transitions(t(new_exprs))
-  pt <- dpt(ts, branching = FALSE)  
+  ts <- dpt::Transitions(t(new_exprs))
+  pt <- dpt::dpt(ts, branching = FALSE)  
+  unloadNamespace("dpt")
+  R.utils::gcDLLs()
   return(pt$DPT)
 }
 

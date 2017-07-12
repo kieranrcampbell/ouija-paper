@@ -78,13 +78,64 @@ rule construct_scesets:
 
 # Analyses ------
 
+rule chu_analysis:
+    input:
+        "data/scesets/chu-sce.rds"
+    output:
+        "analysis/datasets/chu.html",
+        "data/mvt_csv/chu.csv"
+    shell:
+        "Rscript -e \"rmarkdown::render('analysis/datasets/chu.Rmd')\""
+
 rule dulken_analysis:
     input:
         "data/scesets/dulken-sce.rds"
     output:
-        "analysis/datasets/dulken.html"
+        "analysis/datasets/dulken.html",
+        "data/mvt_csv/dulken.csv"
     shell:
         "Rscript -e \"rmarkdown::render('analysis/datasets/dulken.Rmd')\""
+
+rule shin_analysis:
+    output:
+        "analysis/datasets/shin.html",
+        "data/mvt_csv/shin.csv"
+    shell:
+        "Rscript -e \"rmarkdown::render('analysis/datasets/shin.Rmd')\""
+
+rule trapnell_analysis:
+    output:
+        "analysis/datasets/trapnell.html",
+        "data/mvt_csv/trapnell.csv"
+    shell:
+        "Rscript -e \"rmarkdown::render('analysis/datasets/trapnell.Rmd')\""
+
+rule zhou_analysis:
+    output:
+        "analysis/datasets/zhou.html",
+        "data/mvt_csv/zhou.csv"
+    shell:
+        "Rscript -e \"rmarkdown::render('analysis/datasets/zhou.Rmd')\""
+
+rule li_analysis:
+    output:
+        "analysis/datasets/li.html",
+        "data/mvt_csv/li.csv"
+    shell:
+        "Rscript -e \"rmarkdown::render('analysis/datasets/li.Rmd')\""
+
+
+rule marker_correlation_figs:
+    input:
+        "data/mvt_csv/trapnell.csv",
+        "data/mvt_csv/shin.csv",
+        "data/mvt_csv/zhou.csv",
+        "data/mvt_csv/chu.csv",
+        "data/mvt_csv/dulken.csv",
+    output:
+        "figs/marker_correlations.rds",
+        "figs/relative_marker_correlations.rds"
+        
 
 # Marker-vs-transcriptome --------------------
 

@@ -1,5 +1,5 @@
 ---
-title: "Chu analysis for Ouija"
+title: "Li analysis for Ouija"
 output:
   html_document: default
   html_notebook: default
@@ -13,12 +13,11 @@ set.seed(942)
 knitr::opts_chunk$set(fig.width = 5, fig.height = 4, cache = TRUE)
 
 suppressPackageStartupMessages(library(scater))
-suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(dpt))
 devtools::load_all("~/oxford/bnlfa/oui/ouija")
 
-
-
-sce <- readRDS("../../data/scesets/chu-sce.rds")
+sce <- readRDS("../../data/scesets/li-sce.rds")
 print(sce)
 ```
 
@@ -29,9 +28,11 @@ print(sce)
 Get marker genes - first 9 are switch-like, final 2 are transient
 
 ```{r}
-markers <- c("POU5F1", "NANOG", "SOX2", "EOMES", "CER1", "GATA4", "DKK4",
-             "MYCT1", "PRDM1", "CDX1", "MSX2")
-response_types <- c(rep("switch", 9), rep("transient", 2))
+markers <- c("Mef2c", "Foxa2", "Col10a1", "Comp", "Dlx3", "Id3",
+             "Pik3r2", "Spry2", "Sox9", "Insig1",
+             "Scd1", "Scd2")
+stopifnot(all(markers %in% featureNames(sce)))
+response_types <- c(rep("switch", 10), rep("transient", 2))
 ```
 
 Create a marker sceset:
@@ -41,11 +42,11 @@ sce_marker <- sce[markers, ]
 print(sce_marker)
 ```
 
-Have a look at PCA of top 500 most variable (scater default) and markers only:
+Have a look at PCA of top 500 most variable (scater default) and markers only. We don't have any additional phenotype data, but the authors note that pseudotime tracks Col10a expression:
 
 ```{r, fig.show = 'hold', fig.height = 3, fig.width = 4}
-plotPCA(sce, colour_by = 'capture_time')
-plotPCA(sce_marker, colour_by = 'capture_time')
+plotPCA(sce, colour_by = 'Col10a1')
+plotPCA(sce_marker, colour_by = 'Col10a1')
 ```
 
 
@@ -54,8 +55,8 @@ plotPCA(sce_marker, colour_by = 'capture_time')
 We'll call Ouija (using VB for now), with fairly diffuse switching priors
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
-oui <- ouija(sce_marker, response_types, iter = 3000,
-             strength_sd = rep(5, 9))
+oui <- ouija(sce_marker, response_types, iter = 3000, 
+             strength_sd = rep(5, 10))
 ```
 
 Quick diagnostic to check things are mostly ok:
@@ -76,11 +77,6 @@ Plot the switch times:
 plot_switch_times(oui)
 ```
 
-Plot the peak times
-
-```{r, fig.width = 3, fig.height = 2}
-plot_transient_times(oui)
-```
 
 
 
@@ -104,7 +100,6 @@ How many optimal clusters were found?
 
 ```{r}
 length(unique(sce_marker$cluster))
-
 ```
 
 And plot in pca space:
@@ -113,11 +108,6 @@ And plot in pca space:
 plotPCA(sce_marker, colour_by = 'cluster')
 ```
 
-How do these clusters compare to the capture time?
-
-```{r}
-print(table(sce_marker$capture_time, sce_marker$cluster))
-```
 
 
 
@@ -130,22 +120,16 @@ sce_highvar <- sce[gene_vars > cutoff, ]
 ```
 
 ```{r}
-unloadNamespace("scater")
-unloadNamespace("edgeR")
-R.utils::gcDLLs()
-```
-
-```{r}
 source("../../scripts/pseudotime_fitting_functions.R")
 dpt_highvar <- fit_dpt_pseudotime(sce_highvar)
 tscan_highvar <- fit_tscan_pseudotime(sce_highvar)
 monocle_highvar <- fit_monocle_pseudotime(sce_highvar)
 
-
 d <- data.frame(dpt_highvar_genes = dpt_highvar, monocle_highvar_genes = monocle_highvar,
            ouija_markers = map_pseudotime(oui), 
            tscan_highvar_genes = tscan_highvar)
 GGally::ggpairs(d)
+
 ```
 
 ```{r}
@@ -157,21 +141,21 @@ df_cor <- data.frame(
 )
 ```
 
-Find the max cor amongs the other algos:
 
 ```{r}
 cors <- c(
   cor(d$monocle_highvar_genes, d$dpt_highvar_genes),
-  cor(d$dpt_highvar_genes, d$tscan_highvar_genes),
-  cor(d$monocle_highvar_genes, d$tscan_highvar_genes)
+  cor(d$dpt_highvar_genes, d$tscan_highvar_genes, use = "na"),
+  cor(d$monocle_highvar_genes, d$tscan_highvar_genes, use = "na")
 )
 df_cor$max_cor <- max(abs(cors))
 ```
 
 
-
 ```{r}
-readr::write_csv(df_cor, "../../data/mvt_csv/chu.csv")
+readr::write_csv(df_cor, "../../data/mvt_csv/li.csv")
+
 
 ```
+
 

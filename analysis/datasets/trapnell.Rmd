@@ -16,6 +16,8 @@ suppressPackageStartupMessages(library(scater))
 suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(tidyr))
 suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(gplots))
+suppressPackageStartupMessages(library(viridis))
 devtools::load_all("~/oxford/bnlfa/oui/ouija")
 
 source("../../scripts/pseudotime_fitting_functions.R")
@@ -148,9 +150,8 @@ df_cor$max_cor <- max(abs(cors))
 
 
 
-```{r}
+```{r, cache = FALSE}
 readr::write_csv(df_cor, "../../data/mvt_csv/trapnell.csv")
-
 ```
 
 # Comparison of gene fits
@@ -244,8 +245,14 @@ plt <- base_plot + geom_line(data = pred_expr, color = 'darkred', size = 1.2)
 Overall plot:
 
 ```{r}
-cowplot::plot_grid(plt, algorithm_plot, labels = c("A", "B"),
+cowplot::plot_grid(plt, algorithm_plot, labels = c("C", "D"),
                    rel_heights = c(1,2.2), ncol = 1, label_size = 12)
+example_plot <- last_plot()
+```
+
+```{r, cache = FALSE}
+saveRDS(last_plot(), "../../figs/trapnell_example_genes.rds")
+
 ```
 
 
@@ -271,7 +278,7 @@ marker_df <- data_frame(markers = fData(sce_highvar)[['gene_short_name']][fData(
 match(marker_df$index, hmap$rowInd)
 ```
 
-```{r}
+```{r, cache = FALSE}
 diag(ecor_reordered) <- NA
 er <- as_data_frame(ecor_reordered)
 names(er) <- seq_len(ncol(er))
@@ -284,7 +291,8 @@ pal <- viridis_pal()(9)
 ggplot(er_tidy, aes(x = row, y = column, fill = correlation)) +
   geom_raster() + #scale_fill_gradient2(low = pal[1], mid = pal[5], high = pal[9])
   scale_fill_viridis(option = "C", name = "Correlation") +
-  theme_void() +
-  theme(legend.position = 'top')
+  theme_void() #+
+  # theme(legend.position = 'top')
+saveRDS(last_plot(), "../../figs/trapnell_correlation.rds")
 ```
 

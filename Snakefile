@@ -1,7 +1,11 @@
 """
 Reproducible analysis for Ouija paper
 
+To build the pandoc files, call:
 export PATH=$PATH:/Applications/RStudio.app/Contents/MacOS/pandoc
+
+This uses a ridiculous number of DLLs, so you might need to set
+export R_MAX_NUM_DLLS=200
 """
 
 
@@ -83,7 +87,8 @@ rule chu_analysis:
         "data/scesets/chu-sce.rds"
     output:
         "analysis/datasets/chu.html",
-        "data/mvt_csv/chu.csv"
+        "data/mvt_csv/chu.csv",
+        "figs/fig2.png"
     shell:
         "Rscript -e \"rmarkdown::render('analysis/datasets/chu.Rmd')\""
 
@@ -106,14 +111,17 @@ rule shin_analysis:
 rule trapnell_analysis:
     output:
         "analysis/datasets/trapnell.html",
-        "data/mvt_csv/trapnell.csv"
+        "data/mvt_csv/trapnell.csv",
+        "figs/trapnell_correlation.rds",
+        "figs/trapnell_example_genes.rds"
     shell:
         "Rscript -e \"rmarkdown::render('analysis/datasets/trapnell.Rmd')\""
 
 rule zhou_analysis:
     output:
         "analysis/datasets/zhou.html",
-        "data/mvt_csv/zhou.csv"
+        "data/mvt_csv/zhou.csv",
+        "figs/fig3.png"
     shell:
         "Rscript -e \"rmarkdown::render('analysis/datasets/zhou.Rmd')\""
 
@@ -135,91 +143,21 @@ rule marker_correlation_figs:
     output:
         "figs/marker_correlations.rds",
         "figs/relative_marker_correlations.rds"
-        
-
-# Marker-vs-transcriptome --------------------
-
-rule fit_global_pseudotime:
-    input:
-        "data/scesets/scesets.rds"
-    output:
-        "data/scesets/scesets_with_pseudotime.rds"
     shell:
-        "Rscript {R_opts} analysis/marker-vs-txome/01_fit_global_pseudotime.R"
+        "Rscript {R_opts} analysis/datasets/create-comparison-figure.R"
 
-rule markers_to_use:
+# Figures --------
+
+rule figure_1:
     input:
-        "data/scesets/scesets_with_pseudotime.rds"
+        "figs/marker_correlations.rds",
+        "figs/trapnell_correlation.rds",
+        "figs/trapnell_example_genes.rds"
     output:
-        "data/marker-vs-txome/markers_to_use.rds"
+        "figs/fig1.png"
     shell:
-        "Rscript {R_opts} analysis/marker-vs-txome/02_decide_marker_list.R"
+        "Rscript {R_opts} analysis/datasets/create-figure-1.R"
 
-
-rule fit_pseudotimes_across_marker_subsets:
-    input:
-        "data/scesets/scesets_with_pseudotime.rds",
-        "data/marker-vs-txome/markers_to_use.rds"
-    output:
-        "data/scesets/scesets_with_marker_pseudotime.rds",
-        "data/marker-vs-txome/pseudotimes_across_marker_subset_array.rds"
-    shell:
-        "Rscript {R_opts} analysis/marker-vs-txome/03_fit_pseudotimes_across_marker_subsets.R"
-
-rule fit_ouija_pseudotimes:
-    input:
-        "data/scesets/scesets_with_pseudotime.rds",
-        "data/marker-vs-txome/markers_to_use.rds"
-    output:
-        "data/marker-vs-txome/ouija_fits/ouija_pseudotime_{i}_{r}_{nam}.csv"
-    shell:
-        "Rscript {R_opts} analysis/marker-vs-txome/04_fit_ouija_pseudotimes.R {wildcards.i} {wildcards.r} {wildcards.nam}"
-
-rule fit_subset_de:
-	input:
-		"data/scesets/scesets_with_pseudotime.rds",
-		"data/marker-vs-txome/pseudotimes_across_marker_subset_array.rds",
-		"data/marker-vs-txome/ouija_fits/ouija_pseudotime_{i}_{r}_{nam}.csv"
-	output:
-		"data/marker-vs-txome/subset_de_fits/sde_fit_{i}_{r}_{nam}.csv"
-	shell:
-		"Rscript {R_opts} analysis/marker-vs-txome/05_fit_subset_de.R {wildcards.i} {wildcards.r} {wildcards.nam}"
-
-rule fit_txwide_marker_de:
-	input:
-		"data/scesets/scesets_with_marker_pseudotime.rds"
-	output:
-		"data/marker-vs-txome/txwide_marker_de.csv"
-	shell:
-		"Rscript {R_opts} analysis/marker-vs-txome/06_fit_marker_txome_de.R"
-
-
-rule tidy_de:
-	input:
-		output_de,
-		"data/marker-vs-txome/txwide_marker_de.csv"
-	output:
-		"data/marker-vs-txome/tidy_de.csv"
-	shell:
-		"Rscript {R_opts} analysis/marker-vs-txome/07_tidy_de.R"
-
-rule make_de_plot:
-    input:
-        "data/scesets/scesets.rds",
-        "data/marker-vs-txome/tidy_de.csv"
-    output:
-        "figs/marker-vs-txome-de-results.png"
-    shell:
-        "Rscript {R_opts} analysis/marker-vs-txome/08_graph_all_de.R"
-
-rule graph_pseudotime_subsets:
-    input:
-        "data/scesets/scesets_with_marker_pseudotime.rds",
-        "data/marker-vs-txome/pseudotimes_across_marker_subset_array.rds"
-    output:
-        "figs/marker-vs-txome-pseudotime-subsets.png"
-    shell:
-        "Rscript {R_opts} analysis/marker-vs-txome/09_graph_pseudotime_subsets.R"
 
 
 

@@ -1,4 +1,5 @@
 suppressPackageStartupMessages(library(monocle))
+suppressPackageStartupMessages(library(dpt))
 # Pseudotime libraries
 
 fit_monocle_pseudotime <- function(sce, ncenter = NULL) {

@@ -14,6 +14,10 @@ knitr::opts_chunk$set(fig.width = 5, fig.height = 4, cache = TRUE)
 
 suppressPackageStartupMessages(library(scater))
 suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(viridis))
+suppressPackageStartupMessages(library(tidyr))
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(stringr))
 devtools::load_all("~/oxford/bnlfa/oui/ouija")
 
 
@@ -64,6 +68,11 @@ Quick diagnostic to check things are mostly ok:
 plot(oui, what = 'diagnostic')
 ```
 
+```{r}
+saveRDS(oui, "../../data/oui_chu.rds")
+```
+
+
 Plot the gene output:
 
 ```{r, fig.width = 6, fig.height = 5}
@@ -74,6 +83,7 @@ Plot the switch times:
 
 ```{r}
 plot_switch_times(oui)
+switch_plot <- last_plot()
 ```
 
 Plot the peak times
@@ -129,11 +139,6 @@ cutoff <- sort(gene_vars, decreasing = TRUE)[501]
 sce_highvar <- sce[gene_vars > cutoff, ]
 ```
 
-```{r}
-unloadNamespace("scater")
-unloadNamespace("edgeR")
-R.utils::gcDLLs()
-```
 
 ```{r}
 source("../../scripts/pseudotime_fitting_functions.R")
@@ -170,8 +175,117 @@ df_cor$max_cor <- max(abs(cors))
 
 
 
-```{r}
+```{r, cache = FALSE}
 readr::write_csv(df_cor, "../../data/mvt_csv/chu.csv")
 
+```
+
+# Interpretable pseudotime
+
+```{r}
+## DELETE
+oui <- readRDS("../../data/oui_chu.rds")
+```
+```{r}
+reg_df <- regulation_df(oui)
+sig_regs <- significant_regulation(reg_df)
+
+reg_df_all <- inner_join(reg_df, sig_regs, by = "label")
+
+ggplot(reg_df_all, aes(x = param_diffs, fill = signif)) +
+  geom_histogram() + facet_wrap(~ label, scales = "free_x") +
+  labs(x = "Difference in switch times", subtitle = "Posterior difference in switch times") +
+  scale_fill_brewer(palette = "Set2")
+```
+
+Expression plot!
+
+```{r}
+expr_df <- as_data_frame(t(exprs(sce_marker))) %>% 
+  mutate(pseudotime = rank(map_pseudotime(oui))) %>% 
+  gather(gene, expression, -pseudotime)
+
+transient_genes <- c("CDX1", "MSX2")
+
+expr_df <- mutate(expr_df,
+                  gene_type = case_when(
+                    gene %in% transient_genes ~ "Transient",
+                    !(gene %in% transient_genes) ~ "Switch-like"
+                  ))
+gene_order <- c(as.character(levels(switch_plot$data$Gene)), transient_genes)
+
+expr_df$gene <- factor(expr_df$gene, levels = gene_order)
+
+size10_axis <- theme(axis.title = element_text(size = 10))
+
+ggplot(expr_df, aes(x = pseudotime, y = gene, fill = expression)) +
+  geom_raster(interpolate = TRUE) +
+  scale_fill_viridis(name = "Expression") +
+  theme(panel.background = element_blank(),
+        legend.position = "bottom",
+        strip.background = element_rect(colour="white", fill="white")) +
+  facet_grid(gene_type ~ ., scales = "free_y", space = "free") +
+  labs(y = "Gene", x = sprintf("Pseudotime order \u2192")) +
+  scale_x_continuous(expand = c(0,0)) +
+  size10_axis
+  
+expression_plot <- last_plot()
+```
+
+
+```{r}
+switch_plot <- plot_switch_times(oui) + ylim(c(0,1)) + theme(legend.position = "bottom") +
+  size10_axis
+transient_plot <- plot_transient_times(oui) +
+  theme(axis.title.y = element_text(margin = margin(r = 10))) +
+  size10_axis
+
+cowplot::plot_grid(switch_plot, transient_plot, ncol = 1, rel_heights = c(3.5,1),
+                   labels = c("B", "C"), label_size = 12, vjust = c(1.5, 0))
+
+middle_grid <- last_plot()
+```
+
+And reg df
+
+```{r}
+## What we're interested in - 
+iint <- c(
+  "EOMES - DKK4",
+  "MYCT1 - PRDM1",
+  "DKK4 - MYCT1",
+  "DKK4 - CDX1"
+)
+
+reg_df_i <- filter(reg_df_all, label %in% iint)
+reg_df_i$label <- factor(reg_df_i$label, levels = iint)
+
+reg_df_i$signif <- str_to_title(as.character(reg_df_i$signif))
+reg_df_i <- mutate(reg_df_i,
+                   `Significant difference` = signif)
+
+
+ggplot(reg_df_i, aes(x = param_diffs, fill = `Significant difference`)) +
+  geom_histogram(bins = 50) + facet_wrap(~ label) +
+  labs(x = "Posterior difference in regulation times", y = "Posterior samples") +
+  scale_fill_brewer(palette = "Set1") +
+  theme(legend.position = "top",
+        legend.title = element_text(size = 10),
+        strip.background = element_rect(colour="white", fill="white")) +
+  size10_axis
+
+diff_plot <- last_plot()
+diff_plot_grid <- cowplot::plot_grid(NULL, diff_plot, NULL, rel_heights = c(0.3, 5, 0.7), ncol = 1)
+```
+
+
+
+Overall figure
+
+```{r, cache = FALSE}
+cowplot::plot_grid(expression_plot, middle_grid, diff_plot_grid,
+                   labels = c("A", "", "D"), label_size = 12,
+                   rel_widths = c(2.5,2,1.5), nrow = 1)
+ggsave("../../figs/fig2.png", width = 12, height = 5)
 ```
 

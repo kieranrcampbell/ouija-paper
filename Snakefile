@@ -199,7 +199,7 @@ rule create_synthetic_cloglog:
 
 rule benchmark_dpt:
     input:
-        synthetic_files
+        "data/benchmarking/{regime}_synthetic.h5"
     output:
         "data/benchmarking/{regime}_dpt.rds"
     shell:
@@ -207,7 +207,7 @@ rule benchmark_dpt:
 
 rule benchmark_monocle:
     input:
-        synthetic_files
+        "data/benchmarking/{regime}_synthetic.h5"
     output:
         "data/benchmarking/{regime}_monocle.rds"
     shell:
@@ -215,7 +215,7 @@ rule benchmark_monocle:
 
 rule benchmark_tscan:
     input:
-        synthetic_files
+        "data/benchmarking/{regime}_synthetic.h5"
     output:
         "data/benchmarking/{regime}_tscan.rds"
     shell:
@@ -223,7 +223,7 @@ rule benchmark_tscan:
 
 rule ouija_probit:
     input:
-        synthetic_files
+        "data/benchmarking/probit_synthetic.h5"
     output:
         'data/benchmarking/probit/ouija_{cond}_{G}_{rep}.csv'
     shell:
@@ -231,7 +231,7 @@ rule ouija_probit:
 
 rule ouija_cloglog:
     input:
-        synthetic_files
+        "data/benchmarking/cloglog_synthetic.h5"
     output:
         "data/benchmarking/cloglog/ouija_{cond}_{G}_{rep}.csv"
     shell:
@@ -239,15 +239,15 @@ rule ouija_cloglog:
 
 rule ouija_threshold:
     input:
-        synthetic_files
+        "data/benchmarking/threshold_synthetic.h5"
     output:
         "data/benchmarking/threshold/ouija_{cond}_{G}_{rep}.csv"
     shell:
-        "Rscript {R_opts} analysis/benchmarking/ouija_threshold.R --condition {wildcards.cond} --rep {wildcards.rep} --G {wildcards.G}--input_file {input} --output_file {output}"
+        "Rscript {R_opts} analysis/benchmarking/ouija_threshold.R --condition {wildcards.cond} --rep {wildcards.rep} --G {wildcards.G} --input_file {input} --output_file {output}"
 
 rule ouija_logit:
     input:
-        synthetic_files
+        "data/benchmarking/logit_synthetic.h5"
     output:
         "data/benchmarking/logit/ouija_{cond}_{G}_{rep}.csv"
     shell:

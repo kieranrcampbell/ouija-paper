@@ -40,12 +40,10 @@ bnlfa_pseudotime <- function(d, k, t0, condition) {
 benchmark_ouija <- function(condition = "noninformative",
                             rep = 1,
                             G = 6,
-                            input_file = "probit_synthetic.h5",
-                            output_file = "output.hdf5") {
+                            input_file = "input_file",
+                            output_file = "output_file") {
   stopifnot(condition %in% c("true", "noninformative", "t0_uncertainty", "t0_midpoint"))
 
-  
-  
   set.seed(123)
   
   group_name <- paste0("G", G, "/", rep)
@@ -56,9 +54,8 @@ benchmark_ouija <- function(condition = "noninformative",
   bnlfa_res$G <- G
   bnlfa_res$condition = condition
   bnlfa_res$rep = rep
-  
-  csv_name <- paste0("ouija_", condition,"_", G, "_", rep, ".csv")
-  write_csv(bnlfa_res, file.path("data", csv_name))
+
+  write_csv(bnlfa_res, output_file)
 }
 
 

@@ -6,6 +6,7 @@ library(dplyr)
 library(rhdf5)
 library(VGAM)
 
+source("scripts/pseudotime_fitting_functions.R")
 
 get_pseudotime <- function(sce, algorithm = c("dpt", "monocle", "tscan")) {
   algorithm <- match.arg(algorithm)

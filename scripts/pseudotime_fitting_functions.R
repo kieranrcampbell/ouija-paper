@@ -28,8 +28,6 @@ fit_monocle_pseudotime <- function(sce, ncenter = NULL) {
       return(rep(NA, ncol(sce)))
     }
   }
-  unloadNamespace("monocle")
-  R.utils::gcDLLs()
   return(cds$Pseudotime)
 }
 
@@ -59,8 +57,6 @@ fit_tscan_pseudotime <- function(sce, clusternum = 5) {
   
   tscan_cell_inds <- match(tscan_order$sample_name, sampleNames(sce))
   tscan_pseudotime[tscan_cell_inds] <- tscan_order$Pseudotime
-  unloadNamespace("TSCAN")
-  R.utils::gcDLLs()
   return( tscan_pseudotime )
 }
 
@@ -114,8 +110,6 @@ fit_dpt_pseudotime <- function(sce) {
   
   ts <- dpt::Transitions(t(new_exprs))
   pt <- dpt::dpt(ts, branching = FALSE)  
-  unloadNamespace("dpt")
-  R.utils::gcDLLs()
   return(pt$DPT)
 }
 

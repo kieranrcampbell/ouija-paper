@@ -27,7 +27,7 @@ export R_MAX_NUM_DLLS=200
 # Benchmarking variables 
 Gs = [6,9,12,15]
 condition = ["true", "noninformative"]
-reps = list(range(1,41))
+reps = list(range(1,501))
 regimes = ["logit", "probit", "cloglog", "threshold"]
 
 ouija_csv = expand('data/benchmarking/{regime}/ouija_{cond}_{G}_{rep}.csv', cond = condition, G = Gs, rep = reps, regime = regimes)

@@ -33,7 +33,7 @@ stopifnot(algorithm %in% c("dpt", "monocle", "tscan"))
 h5str <- h5ls(input_file)
 
 Gs <- c(6,9,12,15)
-d <- 1:40
+d <- 1:500
 
 cors <- matrix(0, nrow = 0, ncol = 5)
 

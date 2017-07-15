@@ -6,52 +6,55 @@ library(tidyr)
 library(cowplot)
 library(readr)
 
-get_sim_df <- function(root_dir, sim_str = "Latent probit") {
-  
-  files <- dir(root_dir)
-  
-  pca_file <- files[grep("pca", files)]
-  
-  ## pca results
-  pca_df <- readRDS(file.path(root_dir, pca_file)) %>% 
-    tbl_df()
-  pca_df$condition <- "PCA"
-  pca_df <- rename(pca_df, rep = d)
+get_sim_df <- function(regime, regime_str, data_dir = "data/benchmarking") {
+  ouija_dir <- file.path(data_dir, regime)
+  dpt_file <- file.path(data_dir, paste0(regime, "_dpt.rds"))
+  monocle_file <- file.path(data_dir, paste0(regime, "_monocle.rds"))
+  tscan_file <- file.path(data_dir, paste0(regime, "_tscan.rds"))
   
   ## bnlfa results
-  ouija_files <- files[grep("csv", files)]
+  ouija_files <- dir(ouija_dir, full.names = TRUE)
+  
   ouija_list <- lapply(ouija_files, function(f) {
-    dat <- read_csv(file.path(root_dir, f))
+    dat <- read_csv(f)
   })
   df <- do.call("rbind", ouija_list)
-  df <- rbind(df, pca_df)
+
+  parse_rds <- function(file) {
+    if(file.exists(file)) {
+      df_file <- readRDS(file) %>% 
+        tbl_df() %>% 
+        rename(rep = d)
+      return(df_file)
+    } else {
+      return( NULL )
+    }
+  }
   
-  
-  
-  dpt_cors <- readRDS(file.path(root_dir, "dpt.rds")) %>% 
-    tbl_df()
-  dpt_cors <- rename(dpt_cors, rep = d)
+  dpt_cors <- parse_rds(dpt_file)
   df <- rbind(df, dpt_cors)
+
+  monocle_cors <- parse_rds(monocle_file)
+  df <- rbind(df, monocle_cors)
   
-  # ## Monocle results
-  # mfiles <- load("data/monocle.Rdata")
-  # 
-  # df <- rbind(df, monocle_cors)
-  
-  condition_levels <- c("PCA",  "DPT", "noninformative", "true", "t0_uncertainty", "t0_midpoint")
-  alg_names <- c("PCA", "DPT", "Ouija noninformative ", "Ouija informative", "Ouija switch uncertainty", "Ouija switch midpoint")
+  tscan_cors <- parse_rds(tscan_file)
+  df <- rbind(df, tscan_cors)
+
+  condition_levels <- c("dpt",  "monocle", "tscan", "noninformative", "true", "t0_uncertainty", "t0_midpoint")
+  alg_names <- c("DPT", "Monocle 2", "TSCAN", "Ouija noninformative ", "Ouija informative", "Ouija switch uncertainty", "Ouija switch midpoint")
   df$G <- factor(as.numeric(df$G))
   
   df$condition <- factor(df$condition, levels = condition_levels, ordered = TRUE)
-  df$sim_regime <- sim_str
+  df$sim_regime <- regime_str
   return(df)
 }
 
 sim_dfs <- Map(
   get_sim_df,
-  paste0("../", c("cloglog-benchmarking", "logit-benchmarking", "probit-benchmarking", "threshold-benchmarking"), "/data/"),
+  c("cloglog", "logit", "probit", "threshold"), 
   c("Complementary log-log", "Sigmoidal", "Probit", "Threshold")
 )
+
 sim_df_all <- bind_rows(sim_dfs)
 
 sim_df <- filter(sim_df_all, condition != "t0_uncertainty", condition != "t0_midpoint")
@@ -59,8 +62,8 @@ sim_df <- filter(sim_df_all, condition != "t0_uncertainty", condition != "t0_mid
 sim_df$sim_regime <- fct_relevel(sim_df$sim_regime,
                                  c("Sigmoidal", "Complementary log-log", "Probit", "Threshold"))
 
-condition_levels <- c("PCA",  "DPT", "noninformative", "true")
-alg_names <- c("PCA", "DPT", "Ouija noninformative ", "Ouija informative")
+condition_levels <- c("dpt",  "monocle", "tscan", "noninformative", "true", "t0_uncertainty", "t0_midpoint")
+alg_names <- c("DPT", "Monocle 2", "TSCAN", "Ouija noninformative ", "Ouija informative", "Ouija switch uncertainty", "Ouija switch midpoint")
 
 ggplot(sim_df, aes(x = G, y = abscor, fill = condition, color = condition)) + 
   geom_boxplot(outlier.shape = NA) +
@@ -163,9 +166,8 @@ write_csv(sum_res, "data/benchmarking/summarised_results.csv")
 # t0 uncertainty plot -----------------------------------------------------
 
 
-condition_levels <- c("PCA",  "DPT", "noninformative", "t0_midpoint", "t0_uncertainty", "true")
-alg_names <- c("PCA", "DPT", "Ouija noninformative",
-               "Ouija switch midpoint", "Ouija switch uncertainty", "Ouija informative")
+condition_levels <- c("dpt",  "monocle", "tscan", "noninformative", "true", "t0_uncertainty", "t0_midpoint")
+alg_names <- c("DPT", "Monocle 2", "TSCAN", "Ouija noninformative ", "Ouija informative", "Ouija switch uncertainty", "Ouija switch midpoint")
 
 sim_df_logit <- filter(sim_df_all, sim_regime == "Sigmoidal")
 sim_df_logit$condition <- fct_relevel(sim_df_logit$condition, condition_levels)
@@ -190,3 +192,12 @@ boxplt2 <- last_plot()
 
 ggsave("figs/logit-only-ouija.png", width = 6, height = 5)
 
+
+
+
+# Experimental ------------------------------------------------------------
+
+g6 <- filter(sim_df, G == 12, sim_regime == "Sigmoidal")
+x <- filter(g6, condition == "noninformative") %>% .$abscor
+y <- filter(g6, condition == "true") %>% .$abscor
+wilcox.test(x,y, alternative = "less")

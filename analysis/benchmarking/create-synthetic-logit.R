@@ -39,7 +39,7 @@ set.seed(123L)
 
 N <- 100 # cells
 Gs <- c(6, 9, 12, 15) # genes
-N_rep <- 40 # number of datasets at each 'condition
+N_rep <- 500 # number of datasets at each 'condition
 
 h5_file <- "data/benchmarking/logit_synthetic.h5"
 if(file.exists(h5_file)) file.remove(h5_file)

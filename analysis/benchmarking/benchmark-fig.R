@@ -36,7 +36,7 @@ get_sim_df <- function(regime, regime_str, data_dir = "data/benchmarking") {
 
   monocle_cors <- parse_rds(monocle_file)
   df <- rbind(df, monocle_cors)
-  
+
   tscan_cors <- parse_rds(tscan_file)
   df <- rbind(df, tscan_cors)
 
@@ -60,12 +60,12 @@ sim_df_all <- bind_rows(sim_dfs)
 sim_df <- filter(sim_df_all, condition != "t0_uncertainty", condition != "t0_midpoint")
 
 sim_df$sim_regime <- fct_relevel(sim_df$sim_regime,
-                                 c("Sigmoidal", "Complementary log-log", "Probit", "Threshold"))
+                                 c("Sigmoidal", "Complementary log-log", "Probit")#, "Threshold"))
 
 condition_levels <- c("dpt",  "monocle", "tscan", "noninformative", "true", "t0_uncertainty", "t0_midpoint")
 alg_names <- c("DPT", "Monocle 2", "TSCAN", "Ouija noninformative ", "Ouija informative", "Ouija switch uncertainty", "Ouija switch midpoint")
 
-ggplot(sim_df, aes(x = G, y = abscor, fill = condition, color = condition)) + 
+ggplot(filter(sim_df, condition != "monocle"), aes(x = G, y = abscor, fill = condition, color = condition)) + 
   geom_boxplot(outlier.shape = NA) +
   xlab("Number of genes modelled") +
   scale_fill_brewer(palette = "Set1", name = "Algorithm", 
@@ -80,7 +80,8 @@ ggplot(sim_df, aes(x = G, y = abscor, fill = condition, color = condition)) +
         strip.background = element_rect(fill = "grey90"),
         strip.text = element_text(face = "bold")) +
     facet_wrap(~ sim_regime, nrow = 1) +
-  ylim(0.4, NA)
+  ylim(0.5, NA)
+
 boxplt <- last_plot()
 
 # Mean function plots -----------------------------------------------------
@@ -161,6 +162,8 @@ sum_res <- group_by(sim_df, G, condition, sim_regime) %>%
 
 write_csv(sum_res, "data/benchmarking/summarised_results.csv")
 
+na_df <- group_by(sim_df, G, condition, sim_regime) %>% 
+  summarise(mean_na = mean(is.na(abscor)))
 
 
 # t0 uncertainty plot -----------------------------------------------------
@@ -185,7 +188,7 @@ ggplot(sim_df_logit, aes(x = G, y = abscor, fill = condition)) +
   ylab(expression("Pearson" ~ rho)) +
   theme(legend.position = "bottom",
         strip.background = element_rect(fill = "grey90"),
-        strip.text = element_text(face = "bold")) +
+        strip.text = element_text(face = "bold")) #+
   # facet_wrap(~ sim_regime, nrow = 1) +
   ylim(0.5, NA)
 boxplt2 <- last_plot()
@@ -197,7 +200,7 @@ ggsave("figs/logit-only-ouija.png", width = 6, height = 5)
 
 # Experimental ------------------------------------------------------------
 
-g6 <- filter(sim_df, G == 12, sim_regime == "Sigmoidal")
+g6 <- filter(sim_df, G == 9, sim_regime == "Complementary log-log")
 x <- filter(g6, condition == "noninformative") %>% .$abscor
 y <- filter(g6, condition == "true") %>% .$abscor
 wilcox.test(x,y, alternative = "less")

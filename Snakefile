@@ -11,26 +11,20 @@ export R_MAX_NUM_DLLS=200
 
 # Configuration --------------
 
-# Marker-vs-transcriptome variables
-# index = [1,2,3] # Three datasets
-# rep = list(range(1,51)) # 50 repetitions
-# num_additional_markers = [1,5,10,20,50,100,500,1000] # Number of additional markers
-# nam_index = range(1,len(num_additional_markers)+1)
-
-# output_csv = expand("data/marker-vs-txome/ouija_fits/ouija_pseudotime_{i}_{r}_{nam}.csv",
-# 			i = index, r = rep, nam = nam_index)
-
-# output_de = expand("data/marker-vs-txome/subset_de_fits/sde_fit_{i}_{r}_{nam}.csv",
-# 			i = index, r = rep, nam = nam_index)
-
 
 # Benchmarking variables 
 Gs = [6,9,12,15]
 condition = ["true", "noninformative"]
+condition_logit =  ["true", "noninformative", "t0_uncertainty", "t0_midpoint"]
+
 reps = list(range(1,501))
 regimes = ["logit", "probit", "cloglog", "threshold"]
 
 ouija_csv = expand('data/benchmarking/{regime}/ouija_{cond}_{G}_{rep}.csv', cond = condition, G = Gs, rep = reps, regime = regimes)
+
+ouija_csv_logit = expand('data/benchmarking/{regime}/ouija_{cond}_{G}_{rep}.csv', 
+                    cond_logit = condition_logit, G = Gs, rep = reps, regime = regimes)
+
 # pca_files = expand('data/benchmarking/{regime}/pca.rds', regime = regimes)
 # dpt_files = expand('data/benchmarking/{regime}/dpt.rds', regime = regimes)
 
@@ -249,9 +243,9 @@ rule ouija_logit:
     input:
         "data/benchmarking/logit_synthetic.h5"
     output:
-        "data/benchmarking/logit/ouija_{cond}_{G}_{rep}.csv"
+        "data/benchmarking/logit/ouija_{cond_logit}_{G}_{rep}.csv"
     shell:
-        "Rscript {R_opts} analysis/benchmarking/ouija_logit.R --condition {wildcards.cond} --rep {wildcards.rep} --G {wildcards.G} --input_file {input} --output_file {output}"
+        "Rscript {R_opts} analysis/benchmarking/ouija_logit.R --condition {wildcards.cond_logit} --rep {wildcards.rep} --G {wildcards.G} --input_file {input} --output_file {output}"
 
 rule create_benchmark_fig:
     input:
@@ -263,7 +257,8 @@ rule create_benchmark_fig:
         # "data/benchmarking/probit/ouija_{cond}_{G}_{rep}.csv",
         # "data/benchmarking/logit/ouija_{cond}_{G}_{rep}.csv",
         # "data/benchmarking/threshold/ouija_{cond}_{G}_{rep}.csv"
-        ouija_csv
+        ouija_csv,
+        ouija_csv_logit
     output:
         "figs/fig4.png",
         "data/benchmarking/summarised_results.csv"

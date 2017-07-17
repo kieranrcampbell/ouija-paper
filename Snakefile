@@ -20,10 +20,10 @@ condition_logit =  ["true", "noninformative", "t0_uncertainty", "t0_midpoint"]
 reps = list(range(1,501))
 regimes = ["logit", "probit", "cloglog", "threshold"]
 
-ouija_csv = expand('data/benchmarking/{regime}/ouija_{cond}_{G}_{rep}.csv', cond = condition, G = Gs, rep = reps, regime = regimes)
+ouija_csv = expand('data/benchmarking/{regime}/ouija_{cond}_{G}_{rep}.csv', cond = condition, G = Gs, rep = reps, regime = regimes[1:4])
 
 ouija_csv_logit = expand('data/benchmarking/{regime}/ouija_{cond_logit}_{G}_{rep}.csv', 
-                    cond_logit = condition_logit, G = Gs, rep = reps, regime = regimes)
+                    cond_logit = condition_logit, G = Gs, rep = reps, regime = "logit")
 
 # pca_files = expand('data/benchmarking/{regime}/pca.rds', regime = regimes)
 # dpt_files = expand('data/benchmarking/{regime}/dpt.rds', regime = regimes)

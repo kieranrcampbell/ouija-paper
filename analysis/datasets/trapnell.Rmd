@@ -296,3 +296,42 @@ ggplot(er_tidy, aes(x = row, y = column, fill = correlation)) +
 saveRDS(last_plot(), "../../figs/trapnell_correlation.rds")
 ```
 
+```{r}
+pca <- prcomp(t(exprs(sce_highvar)))
+s <- summary(pca)$importance
+s_top <- s[2,1:6]
+
+df_pca <- data_frame(pcs = names(s_top), pct_expl = 100 * s_top)
+
+
+ggplot(df_pca, aes(x = pcs, y = pct_expl)) + 
+  geom_bar(stat = "identity") +
+  ylab("% Variance explained") + 
+  xlab("Principal component") +
+  theme(axis.title = element_text(size = 10))
+
+scree_plot <- last_plot()
+
+```
+
+```{r}
+pc1 <- pca$x[,1]
+pc2 <- pca$x[,2]
+
+pc1_cors <- apply(exprs(sce), 1, cor, pc1)
+pc2_cors <- apply(exprs(sce), 1, cor, pc2)
+
+pc_cor_df <- data_frame(PC1 = pc1_cors, PC2 = pc2_cors) %>% 
+  gather(PC, correlation)
+
+filter(pc_cor_df, abs(correlation) > 0) %>% 
+  ggplot(aes(x = (correlation))) +
+  geom_histogram() +
+  facet_wrap(~ PC) +
+  theme(axis.title = element_text(size = 10),
+        strip.background = element_rect(colour="white", fill="white")) +
+  labs(y = "Number of genes", x = "Correlation to principal component")
+
+pc_cor_plot <- last_plot()
+```
+

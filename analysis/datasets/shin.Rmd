@@ -14,6 +14,8 @@ knitr::opts_chunk$set(fig.width = 5, fig.height = 4, cache = TRUE)
 
 suppressPackageStartupMessages(library(scater))
 suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(tidyr))
 devtools::load_all("~/oxford/bnlfa/oui/ouija")
 
 
@@ -151,3 +153,27 @@ df_cor$max_cor <- max(abs(cors))
 readr::write_csv(df_cor, "../../data/mvt_csv/shin.csv")
 
 ```
+
+Compare gene behaviour across all fits
+
+```{r}
+d2 <- d
+d2$original_waterfall_pseudotime <- sce$wpst
+
+for(i in 1:(ncol(d2) - 1)) {
+  d_i <- d2[,i]
+  if(cor(d_i, sce$wpst, use = "na") < 0)
+    d2[,i] <- max(d_i) - d_i
+}
+
+df_gex <- as_data_frame(t(exprs(sce_marker))) %>% 
+  bind_cols(d2)
+df_gex_tidy1 <- gather(df_gex, gene, expression, -(dpt_highvar_genes:original_waterfall_pseudotime))
+df_gex_tidy <- gather(df_gex_tidy1, algorithm, pseudotime, -gene, -expression)
+
+ggplot(df_gex_tidy, aes(x = pseudotime, y = expression)) +
+  geom_point() +
+  geom_smooth() +
+  facet_grid(gene ~ algorithm, scales = "free")
+```
+

@@ -6,6 +6,8 @@ library(tidyr)
 library(cowplot)
 library(readr)
 
+theme_set(theme_classic())
+
 get_sim_df <- function(regime, regime_str, data_dir = "data/benchmarking") {
   ouija_dir <- file.path(data_dir, regime)
   dpt_file <- file.path(data_dir, paste0(regime, "_dpt.rds"))
@@ -60,10 +62,13 @@ sim_df_all <- bind_rows(sim_dfs)
 sim_df <- filter(sim_df_all, condition != "t0_uncertainty", condition != "t0_midpoint")
 
 sim_df$sim_regime <- fct_relevel(sim_df$sim_regime,
-                                 c("Sigmoidal", "Complementary log-log", "Probit")#, "Threshold"))
+                                 c("Sigmoidal", "Complementary log-log", "Probit", "Threshold"))
 
-condition_levels <- c("dpt",  "monocle", "tscan", "noninformative", "true", "t0_uncertainty", "t0_midpoint")
-alg_names <- c("DPT", "Monocle 2", "TSCAN", "Ouija noninformative ", "Ouija informative", "Ouija switch uncertainty", "Ouija switch midpoint")
+condition_levels <- c("dpt",  "monocle", "tscan", "noninformative", 
+                      "true", "t0_uncertainty", "t0_midpoint")
+
+alg_names <- c("DPT", "Monocle 2", "TSCAN", "Ouija noninformative ", 
+               "Ouija informative", "Ouija switch uncertainty", "Ouija switch midpoint")
 
 ggplot(filter(sim_df, condition != "monocle"), aes(x = G, y = abscor, fill = condition, color = condition)) + 
   geom_boxplot(outlier.shape = NA) +
@@ -140,9 +145,13 @@ ggplot(mean_df_tidy, aes(x = pst, y = value)) +
 
 mean_plot <- last_plot()
 
-plot_grid(mean_plot, boxplt, ncol = 1, rel_heights = c(3,5))
+small_axis <- theme(axis.title = element_text(size = 10))
 
-ggsave("figs/fig4.png", width = 8, height = 6)
+plot_grid(mean_plot + small_axis, 
+          boxplt + small_axis, 
+          ncol = 1, rel_heights = c(2,5))
+
+ggsave("figs/fig4.png", width = 8, height = 5)
 
 
 
@@ -169,10 +178,11 @@ na_df <- group_by(sim_df, G, condition, sim_regime) %>%
 # t0 uncertainty plot -----------------------------------------------------
 
 
-condition_levels <- c("dpt",  "monocle", "tscan", "noninformative", "true", "t0_uncertainty", "t0_midpoint")
-alg_names <- c("DPT", "Monocle 2", "TSCAN", "Ouija noninformative ", "Ouija informative", "Ouija switch uncertainty", "Ouija switch midpoint")
+condition_levels <- c("noninformative", "t0_midpoint", "t0_uncertainty", "true")
+alg_names <- c("Ouija noninformative ", "Ouija switch midpoint", 
+               "Ouija switch uncertainty", "Ouija informative")
 
-sim_df_logit <- filter(sim_df_all, sim_regime == "Sigmoidal")
+sim_df_logit <- filter(sim_df_all, sim_regime == "Sigmoidal", !(condition %in% c("dpt", "monocle", "tscan")))
 sim_df_logit$condition <- fct_relevel(sim_df_logit$condition, condition_levels)
 
 ggplot(sim_df_logit, aes(x = G, y = abscor, fill = condition)) +
@@ -188,9 +198,9 @@ ggplot(sim_df_logit, aes(x = G, y = abscor, fill = condition)) +
   ylab(expression("Pearson" ~ rho)) +
   theme(legend.position = "bottom",
         strip.background = element_rect(fill = "grey90"),
-        strip.text = element_text(face = "bold")) #+
+        strip.text = element_text(face = "bold")) +
   # facet_wrap(~ sim_regime, nrow = 1) +
-  ylim(0.5, NA)
+  ylim(0.85, NA)
 boxplt2 <- last_plot()
 
 ggsave("figs/logit-only-ouija.png", width = 6, height = 5)

@@ -15,7 +15,9 @@ export R_MAX_NUM_DLLS=200
 # Benchmarking variables 
 Gs = [6,9,12,15]
 condition = ["true", "noninformative"]
-condition_logit =  ["true", "noninformative", "t0_uncertainty", "t0_midpoint"]
+
+# Change the below if testing out further priors
+condition_logit =  condition # ["true", "noninformative", "t0_uncertainty", "t0_midpoint"]
 
 reps = list(range(1,501))
 regimes = ["logit", "probit", "cloglog", "threshold"]
@@ -103,7 +105,8 @@ rule dulken_analysis:
 rule shin_analysis:
     output:
         "analysis/datasets/shin.html",
-        "data/mvt_csv/shin.csv"
+        "data/mvt_csv/shin.csv",
+        "figs/supp_shin.png"
     shell:
         "Rscript -e \"rmarkdown::render('analysis/datasets/shin.Rmd')\""
 

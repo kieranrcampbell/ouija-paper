@@ -24,8 +24,8 @@ regimes = ["logit", "probit", "cloglog", "threshold"]
 
 ouija_csv = expand('data/benchmarking/{regime}/ouija_{cond}_{G}_{rep}.csv', cond = condition, G = Gs, rep = reps, regime = regimes[1:4])
 
-ouija_csv_logit = expand('data/benchmarking/{regime}/ouija_{cond_logit}_{G}_{rep}.csv', 
-                    cond_logit = condition_logit, G = Gs, rep = reps, regime = "logit")
+# ouija_csv_logit = expand('data/benchmarking/{regime}/ouija_{cond_logit}_{G}_{rep}.csv', 
+#                     cond_logit = condition_logit, G = Gs, rep = reps, regime = "logit")
 
 # pca_files = expand('data/benchmarking/{regime}/pca.rds', regime = regimes)
 # dpt_files = expand('data/benchmarking/{regime}/dpt.rds', regime = regimes)
@@ -38,10 +38,12 @@ R_opts = "--vanilla"
 
 rule all:
     input:
+        "figs/fig_interpretable.png",
+        "figs/fig_benchmark.png",
         # "figs/fig1.png",
         # "figs/fig2.png",
         # "figs/fig3.png",
-        "figs/fig4.png",
+        # "figs/fig4.png",
         synthetic_files
 
 
@@ -89,7 +91,7 @@ rule chu_analysis:
     output:
         "analysis/datasets/chu.html",
         "data/mvt_csv/chu.csv",
-        "figs/fig2.png"
+        "figs/fig_interpretable.png"
     shell:
         "Rscript -e \"rmarkdown::render('analysis/datasets/chu.Rmd')\""
 
@@ -115,7 +117,8 @@ rule trapnell_analysis:
         "analysis/datasets/trapnell.html",
         "data/mvt_csv/trapnell.csv",
         "figs/trapnell_correlation.rds",
-        "figs/trapnell_example_genes.rds"
+        "figs/trapnell_example_genes.rds",
+        "figs/supp_trapnell.png"
     shell:
         "Rscript -e \"rmarkdown::render('analysis/datasets/trapnell.Rmd')\""
 
@@ -252,18 +255,10 @@ rule ouija_logit:
 
 rule create_benchmark_fig:
     input:
-        # "data/benchmarking/{regime}_dpt.rds",        
-        # "data/benchmarking/{regime}_monocle.rds",
-        # "data/benchmarking/{regime}_tscan.rds",
         benchmark_results,
-        # "data/benchmarking/cloglog/ouija_{cond}_{G}_{rep}.csv",
-        # "data/benchmarking/probit/ouija_{cond}_{G}_{rep}.csv",
-        # "data/benchmarking/logit/ouija_{cond}_{G}_{rep}.csv",
-        # "data/benchmarking/threshold/ouija_{cond}_{G}_{rep}.csv"
-        ouija_csv,
-        ouija_csv_logit
+        ouija_csv
     output:
-        "figs/fig4.png",
+        "figs/fig_benchmark.png",
         "data/benchmarking/summarised_results.csv"
     shell:
         "Rscript {R_opts} analysis/benchmarking/benchmark-fig.R"

@@ -335,3 +335,12 @@ filter(pc_cor_df, abs(correlation) > 0) %>%
 pc_cor_plot <- last_plot()
 ```
 
+Together as one plot:
+
+```{r}
+cowplot::plot_grid(scree_plot, pc_cor_plot, nrow = 1, rel_widths = c(1,2),
+                   labels = "AUTO")
+ggsave("../../figs/supp_trapnell.png", width = 8, height = 3.5)
+```
+
+

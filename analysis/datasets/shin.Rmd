@@ -175,5 +175,7 @@ ggplot(df_gex_tidy, aes(x = pseudotime, y = expression)) +
   geom_point() +
   geom_smooth() +
   facet_grid(gene ~ algorithm, scales = "free")
+
+ggsave("../../figs/supp_shin.png", width = 11, height = 9)
 ```
 

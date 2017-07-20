@@ -80,7 +80,7 @@ ggplot(filter(sim_df, condition != "monocle"), aes(x = G, y = abscor, fill = con
                      breaks = condition_levels,
                      labels = alg_names) +
   cowplot::theme_cowplot(font_size = 11) + 
-  ylab(expression("Pearson" ~ rho)) +
+  ylab(expression("Pearson" ~ rho ~ "to true pseudotime")) +
   theme(legend.position = "bottom",
         strip.background = element_rect(fill = "grey90"),
         strip.text = element_text(face = "bold")) +
@@ -151,7 +151,7 @@ plot_grid(mean_plot + small_axis,
           boxplt + small_axis, 
           ncol = 1, rel_heights = c(2,5))
 
-ggsave("figs/fig4.png", width = 8, height = 5)
+ggsave("figs/fig_benchmark.png", width = 8, height = 5)
 
 
 
@@ -177,33 +177,33 @@ na_df <- group_by(sim_df, G, condition, sim_regime) %>%
 
 # t0 uncertainty plot -----------------------------------------------------
 
-
-condition_levels <- c("noninformative", "t0_midpoint", "t0_uncertainty", "true")
-alg_names <- c("Ouija noninformative ", "Ouija switch midpoint", 
-               "Ouija switch uncertainty", "Ouija informative")
-
-sim_df_logit <- filter(sim_df_all, sim_regime == "Sigmoidal", !(condition %in% c("dpt", "monocle", "tscan")))
-sim_df_logit$condition <- fct_relevel(sim_df_logit$condition, condition_levels)
-
-ggplot(sim_df_logit, aes(x = G, y = abscor, fill = condition)) +
-  geom_boxplot(outlier.shape = NA) +
-  xlab("Number of genes modelled") +
-  scale_fill_brewer(palette = "Set1", name = "Algorithm",
-                    breaks = condition_levels,
-                    labels = alg_names) +
-  scale_color_brewer(palette = "Set1", name = "Algorithm",
-                     breaks = condition_levels,
-                     labels = alg_names) +
-  cowplot::theme_cowplot(font_size = 11) +
-  ylab(expression("Pearson" ~ rho)) +
-  theme(legend.position = "bottom",
-        strip.background = element_rect(fill = "grey90"),
-        strip.text = element_text(face = "bold")) +
-  # facet_wrap(~ sim_regime, nrow = 1) +
-  ylim(0.85, NA)
-boxplt2 <- last_plot()
-
-ggsave("figs/logit-only-ouija.png", width = 6, height = 5)
+# 
+# condition_levels <- c("noninformative", "t0_midpoint", "t0_uncertainty", "true")
+# alg_names <- c("Ouija noninformative ", "Ouija switch midpoint", 
+#                "Ouija switch uncertainty", "Ouija informative")
+# 
+# sim_df_logit <- filter(sim_df_all, sim_regime == "Sigmoidal", !(condition %in% c("dpt", "monocle", "tscan")))
+# sim_df_logit$condition <- fct_relevel(sim_df_logit$condition, condition_levels)
+# 
+# ggplot(sim_df_logit, aes(x = G, y = abscor, fill = condition)) +
+#   geom_boxplot(outlier.shape = NA) +
+#   xlab("Number of genes modelled") +
+#   scale_fill_brewer(palette = "Set1", name = "Algorithm",
+#                     breaks = condition_levels,
+#                     labels = alg_names) +
+#   scale_color_brewer(palette = "Set1", name = "Algorithm",
+#                      breaks = condition_levels,
+#                      labels = alg_names) +
+#   cowplot::theme_cowplot(font_size = 11) +
+#   ylab(expression("Pearson" ~ rho)) +
+#   theme(legend.position = "bottom",
+#         strip.background = element_rect(fill = "grey90"),
+#         strip.text = element_text(face = "bold")) +
+#   # facet_wrap(~ sim_regime, nrow = 1) +
+#   ylim(0.85, NA)
+# boxplt2 <- last_plot()
+# 
+# ggsave("figs/logit-only-ouija.png", width = 6, height = 5)
 
 
 

@@ -20,8 +20,6 @@ suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(stringr))
 devtools::load_all("~/oxford/bnlfa/oui/ouija")
 
-
-
 sce <- readRDS("../../data/scesets/chu-sce.rds")
 print(sce)
 ```
@@ -58,19 +56,26 @@ plotPCA(sce_marker, colour_by = 'capture_time')
 We'll call Ouija (using VB for now), with fairly diffuse switching priors
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
-oui <- ouija(sce_marker, response_types, iter = 3000,
-             strength_sd = rep(5, 9))
+saved_oui <- "../../data/oui_chu.rds"
+oui <- NULL
+
+if(!file.exists(saved_oui)) {
+  oui <- ouija(sce_marker, response_types, iter = 3000,
+               strength_sd = rep(5, 9))
+  saveRDS(oui, "../../data/oui_chu.rds")
+} else {
+  oui <- readRDS("../../data/oui_chu.rds")
+}
 ```
 
 Quick diagnostic to check things are mostly ok:
 
 ```{r}
 plot(oui, what = 'diagnostic')
+
 ```
 
-```{r}
-saveRDS(oui, "../../data/oui_chu.rds")
-```
+
 
 
 Plot the gene output:
@@ -84,12 +89,14 @@ Plot the switch times:
 ```{r}
 plot_switch_times(oui)
 switch_plot <- last_plot()
+
 ```
 
 Plot the peak times
 
 ```{r, fig.width = 3, fig.height = 2}
 plot_transient_times(oui)
+
 ```
 
 
@@ -102,19 +109,20 @@ We can construct the confusion matrix to find discrete cell types:
 cmat <- confusion_matrix(oui)
 cmo <- confusion_matrix_ordered(oui, cmat)
 plot_confusion(oui, cmo)
+
 ```
 
 And cluster it to find cell types
 
 ```{r}
 sce_marker$cluster <- factor(cluster_confusion(cmat))
+
 ```
 
 How many optimal clusters were found?
 
 ```{r}
 length(unique(sce_marker$cluster))
-
 ```
 
 And plot in pca space:
@@ -137,6 +145,7 @@ print(table(sce_marker$capture_time, sce_marker$cluster))
 gene_vars <- matrixStats::rowVars(exprs(sce))
 cutoff <- sort(gene_vars, decreasing = TRUE)[501]
 sce_highvar <- sce[gene_vars > cutoff, ]
+
 ```
 
 
@@ -160,6 +169,7 @@ df_cor <- data.frame(
   dpt = cor(d$dpt_highvar_genes, ouija_pst),
   tscan = cor(d$tscan_highvar_genes, ouija_pst, use = "na")
 )
+
 ```
 
 Find the max cor amongs the other algos:
@@ -177,15 +187,12 @@ df_cor$max_cor <- max(abs(cors))
 
 ```{r, cache = FALSE}
 readr::write_csv(df_cor, "../../data/mvt_csv/chu.csv")
-
 ```
 
 # Interpretable pseudotime
 
-```{r}
-## DELETE
-oui <- readRDS("../../data/oui_chu.rds")
-```
+
+
 ```{r}
 reg_df <- regulation_df(oui)
 sig_regs <- significant_regulation(reg_df)
@@ -201,7 +208,11 @@ ggplot(reg_df_all, aes(x = param_diffs, fill = signif)) +
 Expression plot!
 
 ```{r}
-expr_df <- as_data_frame(t(exprs(sce_marker))) %>% 
+expr_mat <- t(exprs(sce_marker))
+expr_maxes <- apply(expr_mat, 2, max)
+expr_mat <- t(t(expr_mat) / expr_maxes)
+
+expr_df <- as_data_frame(expr_mat) %>% 
   mutate(pseudotime = rank(map_pseudotime(oui))) %>% 
   gather(gene, expression, -pseudotime)
 
@@ -212,15 +223,20 @@ expr_df <- mutate(expr_df,
                     gene %in% transient_genes ~ "Transient",
                     !(gene %in% transient_genes) ~ "Switch-like"
                   ))
+
 gene_order <- c(as.character(levels(switch_plot$data$Gene)), transient_genes)
 
 expr_df$gene <- factor(expr_df$gene, levels = gene_order)
 
+```
+
+
+```{r}
 size10_axis <- theme(axis.title = element_text(size = 10))
 
 ggplot(expr_df, aes(x = pseudotime, y = gene, fill = expression)) +
   geom_raster(interpolate = TRUE) +
-  scale_fill_viridis(name = "Expression") +
+  scale_fill_viridis(name = "Relative expression") +
   theme(panel.background = element_blank(),
         legend.position = "bottom",
         strip.background = element_rect(colour="white", fill="white")) +
@@ -230,6 +246,7 @@ ggplot(expr_df, aes(x = pseudotime, y = gene, fill = expression)) +
   size10_axis
   
 expression_plot <- last_plot()
+
 ```
 
 
@@ -286,6 +303,6 @@ Overall figure
 cowplot::plot_grid(expression_plot, middle_grid, diff_plot_grid,
                    labels = c("A", "", "D"), label_size = 12,
                    rel_widths = c(2.5,2,1.5), nrow = 1)
-ggsave("../../figs/fig2.png", width = 12, height = 5)
+ggsave("../../figs/fig_interpretable.png", width = 12, height = 5)
 ```
 

@@ -28,8 +28,8 @@ benchmark_results = expand("data/benchmarking/{regime}_{algorithm}.rds", regime 
 
 # Transient variables
 Gts = [8, 12, 16, 24]
-prop_switch = [0.25, 0.5]
-N_rep_transient = 100
+prop_switch = [0.75, 0.5]
+N_rep_transient = list(range(1, 101))
 
 transient_synthetic_files = expand("data/transient/synthetic/transient_sim_{Gt}_{ps}_{rept}.csv",
                                     Gt = Gts, ps = prop_switch, rept = N_rep_transient)

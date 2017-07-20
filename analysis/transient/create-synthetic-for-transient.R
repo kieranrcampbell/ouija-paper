@@ -1,6 +1,6 @@
 
 library(ggplot2)
-library(rhdf5)
+library(readr)
 
 
 source("analysis/benchmarking/common_simulation_functions.R")
@@ -71,8 +71,8 @@ base_filename <- "data/transient/synthetic/transient_sim_"
 
 for(G in Gs) {
   for(ps in prop_switches) {
-    for(rep in N_rep) {
-      fname <- paste0(base_filename, "_", G, "_", ps, "_", rep, ".csv")
+    for(rep in seq_len(N_rep)) {
+      fname <- paste0(base_filename, G, "_", ps, "_", rep, ".csv")
       d <- generate_dataset(N, G, ps)
       write_csv(d$Y, fname)
     }

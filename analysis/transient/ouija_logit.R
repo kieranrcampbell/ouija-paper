@@ -1,35 +1,21 @@
 
-library(rhdf5)
 library(dplyr)
 library(aargh)
 library(readr)
 
 library(ouija)
 
-bnlfa_pseudotime <- function(d, condition = "noninformative") {
+bnlfa_pseudotime <- function(d) {
   Y <- as.matrix(select(d, -pseudotime))
-  
-  if(condition == "true") {
-    k_means <- k
-    t0_means <- t0
-    strength_sd <- time_sd <- rep(0.1, length(k))
-  } else if(condition == "noninformative") {
-    k_means <- rep(0, length(k))
-    t0_means <- rep(0.5, length(k))
-    strength_sd <- time_sd <- rep(5, length(k))
-  } else if(condition == "t0_uncertainty") {
-    k_means <- k
-    t0_means <- t0 + rnorm(length(t0), 0, 0.1)
-    strength_sd <- time_sd <- rep(0.1, length(k))
-  } else if(condition == "t0_midpoint") {
-    k_means <- k
-    t0_means <- rep(0.5, length(k))
-    strength_sd <- time_sd <- rep(0.1, length(k))
-  }
+  G <- ncol(Y)
+    
+  k_means <- rep(0, G)
+  t0_means <- rep(0.5, G)
+  strength_sd <- time_sd <- rep(5, G)
 
   bm <- ouija(Y, strengths = k_means, times = t0_means, 
-              strength_sd = strength_sd, time_sd = time_sd,
-              normalise_expression = (condition == "noninformative"))
+              strength_sd = strength_sd, time_sd = time_sd)
+  
   tmap <- map_pseudotime(bm)
   return( c(abscor = abs(cor(d$pseudotime, tmap)),
                kendall_tau = abs(cor(d$pseudotime, tmap, method = "kendall")),
@@ -46,11 +32,12 @@ benchmark_ouija <- function(rep = 1,
   set.seed(123)
   
   dfs <- read_csv(input_file)
-  bnlfa_results <- bnlfa_pseudotime(dfs$d, dfs$k, dfs$t0, condition)
+  bnlfa_results <- bnlfa_pseudotime(dfs)
   bnlfa_res <- data.frame(t(bnlfa_results))
   bnlfa_res$G <- G
-  bnlfa_res$condition = condition
-  bnlfa_res$rep = rep
+  bnlfa_res$prop_switch <- prop_switch
+  bnlfa_res$condition <- condition
+  bnlfa_res$rep <- rep
 
   write_csv(bnlfa_res, output_file)
 }

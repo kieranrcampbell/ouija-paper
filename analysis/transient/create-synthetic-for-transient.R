@@ -10,13 +10,13 @@ sigmoid <- function(pst, k, mu0, t0) {
 }
 
 transient <- function(pst, mu0, b, p) {
-  2 * mu0 * exp(-10 * b(pst - p)^2)
+  2 * mu0 * exp(-10 * b * (pst - p)^2)
 }
 
 
 #' Synthetic single-cells with mean and dispersion
 rsinglecell_sigmoid <- function(k, mu0, t0, pst) {
-  mean <- pstmean(pst, k, mu0, t0)
+  mean <- sigmoid(pst, k, mu0, t0)
   x <- rcensnorm(mean, sqrt(gvar(mean)))
   
   pdrop <- pdropout(mean)
@@ -51,10 +51,10 @@ generate_dataset <- function(N, G, prop_switch) {
   mu0 <- runif(G_transient, 3, 4)
   p <- runif(G_transient, 0.3, 0.7)
   b <- runif(G_transient, 1, 5)
-  Y_transient <- mapply(rsinglecell_transient, mu0, p, b, MoreArgs = list(pst = true_pst))
-  colnames(Y_transient) <- paste0("switch_gene_", seq_len(G_transient))
+  Y_transient <- mapply(rsinglecell_transient, mu0, b, p, MoreArgs = list(pst = true_pst))
+  colnames(Y_transient) <- paste0("transient_gene_", seq_len(G_transient))
   
-  Y <- rbind(Y_switch, Y_transient)
+  Y <- cbind(Y_switch, Y_transient)
   
   return( list(Y = data.frame(Y, pseudotime = true_pst), G = G, prop_switch = prop_switch) )
 }

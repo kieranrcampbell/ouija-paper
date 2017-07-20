@@ -16,35 +16,41 @@ export R_MAX_NUM_DLLS=200
 Gs = [6,9,12,15]
 condition = ["true", "noninformative"]
 
-# Change the below if testing out further priors
-condition_logit =  condition # ["true", "noninformative", "t0_uncertainty", "t0_midpoint"]
-
 reps = list(range(1,501))
 regimes = ["logit", "probit", "cloglog", "threshold"]
 
 ouija_csv = expand('data/benchmarking/{regime}/ouija_{cond}_{G}_{rep}.csv', cond = condition, G = Gs, rep = reps, regime = regimes[1:4])
 
-# ouija_csv_logit = expand('data/benchmarking/{regime}/ouija_{cond_logit}_{G}_{rep}.csv', 
-#                     cond_logit = condition_logit, G = Gs, rep = reps, regime = "logit")
-
-# pca_files = expand('data/benchmarking/{regime}/pca.rds', regime = regimes)
-# dpt_files = expand('data/benchmarking/{regime}/dpt.rds', regime = regimes)
 
 synthetic_files = expand("data/benchmarking/{regime}_synthetic.h5", regime = regimes)
 benchmark_results = expand("data/benchmarking/{regime}_{algorithm}.rds", regime = regimes, algorithm = ["dpt", "monocle", "tscan"])
+
+
+# Transient variables
+Gts = [8, 12, 16, 24]
+prop_switch = [0.25, 0.5]
+N_rep_transient = 100
+
+transient_synthetic_files = expand("data/transient/synthetic/transient_sim_{Gt}_{ps}_{rept}.csv",
+                                    Gt = Gts, ps = prop_switch, rept = N_rep_transient)
+transient_ouija_files = expand("data/transient/results/ouija_cor_{Gt}_{ps}_{rept}.csv",
+                                    Gt = Gts, ps = prop_switch, rept = N_rep_transient)
+
+
 
 R_opts = "--vanilla"
 
 
 rule all:
     input:
-        "figs/fig_interpretable.png",
-        "figs/fig_benchmark.png",
+        #"figs/fig_interpretable.png",
+        # "figs/fig_benchmark.png",
         # "figs/fig1.png",
         # "figs/fig2.png",
         # "figs/fig3.png",
         # "figs/fig4.png",
-        synthetic_files
+        # synthetic_files,
+        transient_synthetic_files, transient_ouija_files
 
 
 # Construct SCESets ---------------------
@@ -262,3 +268,20 @@ rule create_benchmark_fig:
         "data/benchmarking/summarised_results.csv"
     shell:
         "Rscript {R_opts} analysis/benchmarking/benchmark-fig.R"
+
+# Transient expression --------
+
+rule create_transient_data:
+    output:
+        transient_synthetic_files
+    shell:
+        "Rscript {R_opts} analysis/transient/create-synthetic-for-transient.R"
+
+rule transient_ouija:
+    input:
+        "data/transient/synthetic/transient_sim_{Gt}_{ps}_{rept}.csv"
+    output:
+        "data/transient/results/ouija_cor_{Gt}_{ps}_{rept}.csv"
+    shell:
+        "Rscript {R_opts} analysis/transient/ouija_logit.R --rep {wildcards.rept} --G {wildcards.Gt} --prop_switch {wildcards.ps} --input_file {input} --output_file {output}"
+

@@ -36,7 +36,6 @@ benchmark_ouija <- function(rep = 1,
   bnlfa_res <- data.frame(t(bnlfa_results))
   bnlfa_res$G <- G
   bnlfa_res$prop_switch <- prop_switch
-  bnlfa_res$condition <- condition
   bnlfa_res$rep <- rep
 
   write_csv(bnlfa_res, output_file)

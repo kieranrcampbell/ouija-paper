@@ -13,8 +13,13 @@ set.seed(942)
 knitr::opts_chunk$set(fig.width = 5, fig.height = 4, cache = TRUE)
 
 suppressPackageStartupMessages(library(scater))
-suppressPackageStartupMessages(library(tidyverse))
-suppressPackageStartupMessages(library(dpt))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(dplyr))
+
+suppressPackageStartupMessages(library(tidyr))
+suppressPackageStartupMessages(library(readr))
+suppressPackageStartupMessages(library(rstan))
+
 devtools::load_all("~/oxford/bnlfa/oui/ouija")
 
 sce <- readRDS("../../data/scesets/li-sce.rds")
@@ -55,9 +60,17 @@ plotPCA(sce_marker, colour_by = 'Col10a1')
 We'll call Ouija (using VB for now), with fairly diffuse switching priors
 
 ```{r, message = FALSE, warning = FALSE, results = 'hide'}
-oui <- ouija(sce_marker, response_types, iter = 3000, 
-             strength_sd = rep(5, 10))
+oui_file <-  "../../data/ouija_fits/li.rds"
+if(!file.exists(oui_file)) {
+  oui <- ouija(sce_marker, response_types, iter = 3000, 
+               strength_sd = rep(5, 10))
+  saveRDS(oui, oui_file)
+} else {
+  oui <- readRDS(oui_file)
+}
 ```
+
+
 
 Quick diagnostic to check things are mostly ok:
 
@@ -125,37 +138,141 @@ dpt_highvar <- fit_dpt_pseudotime(sce_highvar)
 tscan_highvar <- fit_tscan_pseudotime(sce_highvar)
 monocle_highvar <- fit_monocle_pseudotime(sce_highvar)
 
-d <- data.frame(dpt_highvar_genes = dpt_highvar, monocle_highvar_genes = monocle_highvar,
-           ouija_markers = map_pseudotime(oui), 
-           tscan_highvar_genes = tscan_highvar)
-GGally::ggpairs(d)
+dpt_highvar[which.min(dpt_highvar)] <- NA
 
+d <- data.frame(dpt_highvar_genes = dpt_highvar, monocle_highvar_genes = monocle_highvar,
+           ouija_markers = colMeans(rstan::extract(oui$fit, "t")$t), 
+           tscan_highvar_genes = tscan_highvar)
 ```
 
 ```{r}
-ouija_pst <- map_pseudotime(oui)
+ouija_pst <- colMeans(rstan::extract(oui$fit, "t")$t)
 df_cor <- data.frame(
   monocle = cor(d$monocle_highvar_genes, ouija_pst),
-  dpt = cor(d$dpt_highvar_genes, ouija_pst),
+  dpt = cor(d$dpt_highvar_genes, ouija_pst, use = "na"),
   tscan = cor(d$tscan_highvar_genes, ouija_pst, use = "na")
 )
+
 ```
 
 
 ```{r}
 cors <- c(
-  cor(d$monocle_highvar_genes, d$dpt_highvar_genes),
+  cor(d$monocle_highvar_genes, d$dpt_highvar_genes, use = "na"),
   cor(d$dpt_highvar_genes, d$tscan_highvar_genes, use = "na"),
   cor(d$monocle_highvar_genes, d$tscan_highvar_genes, use = "na")
 )
 df_cor$max_cor <- max(abs(cors))
 ```
 
-
 ```{r}
-readr::write_csv(df_cor, "../../data/mvt_csv/li.csv")
+cor_mat <- cor(d, use = "na")
+cor_mat <- abs(cor_mat)
+diag(cor_mat) <- "NA"
 
+cor_df <- as_data_frame(cor_mat) %>% 
+  mutate(alg1 = rownames(cor_mat)) %>% 
+  gather(alg2, correlation, -alg1) 
+cor_df$correlation <- as.numeric(cor_df$correlation)
 
+tidy_algorithm_str <- function(s) {
+  sapply(stringr::str_split(s, "_"), `[`, 1) %>% 
+    stringr::str_to_title() 
+}
+
+uppercase_dpt_tscan <- function(s) {
+  if(s == "Dpt" ||  s == "Tscan") return(stringr::str_to_upper(s))
+  s
+}
+
+cor_df$alg1_tidy <- tidy_algorithm_str(cor_df$alg1)
+cor_df$alg2_tidy <- tidy_algorithm_str(cor_df$alg2)
+
+cor_df$alg1_tidy <- sapply(cor_df$alg1_tidy, uppercase_dpt_tscan)
+cor_df$alg2_tidy <- sapply(cor_df$alg2_tidy, uppercase_dpt_tscan)
+
+ggplot(cor_df, aes(x = alg1_tidy, y = alg2_tidy, fill = correlation)) +
+  geom_raster() +
+  viridis::scale_fill_viridis(name = "Absolute\ncorrelation") +
+  labs(x = "Algorithm", y = "Algorithm") +
+    theme(panel.background = element_blank(),
+          axis.text = element_text(size = 10),
+          legend.title = element_text(size = 10))
+
+cor_plot <- last_plot()
 ```
 
+
+
+```{r, cache = FALSE}
+readr::write_csv(df_cor, "../../data/mvt_csv/li.csv")
+```
+
+
+```{r}
+d2 <- d
+d2$original_waterfall_pseudotime <- sce$wpst
+
+col10a1 <- exprs(sce)["Col10a1",]
+
+for(i in 1:(ncol(d2) - 1)) {
+  d_i <- d2[,i]
+  if(cor(d_i, col10a1, use = "na") < 0)
+    d2[,i] <- max(d_i) - d_i
+}
+
+df_gex <- as_data_frame(t(exprs(sce_marker))) %>% 
+  bind_cols(d2)
+df_gex_tidy1 <- gather(df_gex, gene, expression, -(dpt_highvar_genes:tscan_highvar_genes))
+df_gex_tidy <- gather(df_gex_tidy1, algorithm, pseudotime, -gene, -expression)
+
+ggplot(df_gex_tidy, aes(x = pseudotime, y = expression)) +
+  geom_point() +
+  geom_smooth() +
+  facet_grid(gene ~ algorithm, scales = "free")
+
+ggsave("../../figs/supp_li.png", width = 11, height = 11)
+```
+
+Example genes
+
+```{r}
+gene_df <- frame_data(
+  ~ gene, ~ original_behaviour, ~ designation,
+  "Mef2c", "Upregulation", "Correct",
+  "Pik3r2", "Late upregulation", "Correct",
+  # "Comp", "Upregulation", "Incorrect",
+  "Scd1", "Transient", "Incorrect"
+)
+
+expr_df <- as_data_frame(t(exprs(sce_marker)[gene_df$gene, ])) %>% 
+  mutate(ouija_pseudotime = d$ouija_markers) %>% 
+  gather(gene, expression, -ouija_pseudotime)
+
+expr_df <- inner_join(expr_df, gene_df, by = "gene")
+expr_df$gene <- factor(expr_df$gene, levels = gene_df$gene)
+
+cols <- c("#4575b4", "#d73027")
+
+plot_expr <- function(df, co) {
+  ggplot(df, aes(x = ouija_pseudotime, y = expression)) +
+    geom_point(color = co) +
+    facet_wrap(~ gene, scales = "free_y", ncol = 1) +
+    stat_smooth(color = 'black') +
+    theme(strip.background = element_rect(colour="white", fill="white"),
+          axis.title = element_text(size = 10)) +
+    labs(x = "Ouija pseudotime", y = "Expression")
+}
+
+correct_genes <- filter(expr_df, designation == "Correct") %>% 
+  plot_expr(cols[1])
+incorrect_genes <- filter(expr_df, designation == "Incorrect") %>% 
+  plot_expr(cols[2])
+```
+
+```{r, cache = FALSE}
+saveRDS(cor_plot, "../../figs/li_cor.rds")
+saveRDS(correct_genes, "../../figs/li_correct_genes.rds")
+saveRDS(incorrect_genes, "../../figs/li_incorrect_genes.rds")
+```
 

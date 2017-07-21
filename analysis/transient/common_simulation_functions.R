@@ -20,3 +20,34 @@ rcensnorm <- function(mean, sd, lower_bound = 0) {
 rbernoulli <- function(pp){
   sapply(pp, function(p) sample(0:1, 1, prob = c(p, 1 - p)))
 }
+
+
+sigmoid <- function(pst, k, mu0, t0) {
+  2 * mu0 / (1 + exp(-k * (pst - t0)))
+}
+
+transient <- function(pst, mu0, b, p) {
+  2 * mu0 * exp(-10 * b * (pst - p)^2)
+}
+
+
+#' Synthetic single-cells with mean and dispersion
+rsinglecell_sigmoid <- function(k, mu0, t0, pst) {
+  mean <- sigmoid(pst, k, mu0, t0)
+  x <- rcensnorm(mean, sqrt(gvar(mean)))
+  
+  pdrop <- pdropout(mean)
+  is_dropout <- rbernoulli(pdrop)
+  x[is_dropout] <- 0
+  return( x )
+}
+
+rsinglecell_transient <- function(mu0, b, p, pst) {
+  mean <- transient(pst, mu0, b, p)
+  x <- rcensnorm(mean, sqrt(gvar(mean)))
+  
+  pdrop <- pdropout(mean)
+  is_dropout <- rbernoulli(pdrop)
+  x[is_dropout] <- 0
+  return( x )
+}

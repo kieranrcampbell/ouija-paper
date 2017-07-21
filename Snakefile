@@ -137,9 +137,14 @@ rule zhou_analysis:
         "Rscript -e \"rmarkdown::render('analysis/datasets/zhou.Rmd')\""
 
 rule li_analysis:
+    input:
+        "data/scesets/li-sce.rds"
     output:
         "analysis/datasets/li.html",
-        "data/mvt_csv/li.csv"
+        "data/mvt_csv/li.csv",
+        "figs/li_cor.rds",
+        "figs/li_correct_genes.rds",
+        "figs/li_incorrect_genes.rds"
     shell:
         "Rscript -e \"rmarkdown::render('analysis/datasets/li.Rmd')\""
 
@@ -285,3 +290,11 @@ rule transient_ouija:
     shell:
         "Rscript {R_opts} analysis/transient/ouija_logit.R --rep {wildcards.rept} --G {wildcards.Gt} --prop_switch {wildcards.ps} --input_file {input} --output_file {output}"
 
+
+rule transient_figure:
+    input:
+        transient_ouija_files,
+    output:
+        "figs/fig_transient.png"
+    shell:
+        "Rscript {R_opts} analysis/transient/transient-fig.R"

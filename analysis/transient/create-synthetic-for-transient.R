@@ -3,37 +3,9 @@ library(ggplot2)
 library(readr)
 
 
-source("analysis/benchmarking/common_simulation_functions.R")
-
-sigmoid <- function(pst, k, mu0, t0) {
-  2 * mu0 / (1 + exp(-k * (pst - t0)))
-}
-
-transient <- function(pst, mu0, b, p) {
-  2 * mu0 * exp(-10 * b * (pst - p)^2)
-}
+source("analysis/transient/common_simulation_functions.R")
 
 
-#' Synthetic single-cells with mean and dispersion
-rsinglecell_sigmoid <- function(k, mu0, t0, pst) {
-  mean <- sigmoid(pst, k, mu0, t0)
-  x <- rcensnorm(mean, sqrt(gvar(mean)))
-  
-  pdrop <- pdropout(mean)
-  is_dropout <- rbernoulli(pdrop)
-  x[is_dropout] <- 0
-  return( x )
-}
-
-rsinglecell_transient <- function(mu0, b, p, pst) {
-  mean <- transient(pst, mu0, b, p)
-  x <- rcensnorm(mean, sqrt(gvar(mean)))
-  
-  pdrop <- pdropout(mean)
-  is_dropout <- rbernoulli(pdrop)
-  x[is_dropout] <- 0
-  return( x )
-}
 
 #' For C cells and G genes
 generate_dataset <- function(N, G, prop_switch) {

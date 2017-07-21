@@ -45,7 +45,7 @@ rule all:
     input:
         #"figs/fig_interpretable.png",
         # "figs/fig_benchmark.png",
-        # "figs/fig1.png",
+        # "fig_global_marker.png",
         # "figs/fig2.png",
         # "figs/fig3.png",
         # "figs/fig4.png",
@@ -158,7 +158,8 @@ rule marker_correlation_figs:
         "data/mvt_csv/dulken.csv",
     output:
         "figs/marker_correlations.rds",
-        "figs/relative_marker_correlations.rds"
+        "figs/relative_marker_correlations.rds",
+        "data/max_correlations.csv"
     shell:
         "Rscript {R_opts} analysis/datasets/create-comparison-figure.R"
 
@@ -168,9 +169,11 @@ rule figure_1:
     input:
         "figs/marker_correlations.rds",
         "figs/trapnell_correlation.rds",
+        "figs/relative_marker_correlations.rds",
         "figs/trapnell_example_genes.rds"
     output:
-        "figs/fig1.png"
+        "figs/fig_global_marker.png",
+        "figs/supp_relative_cor.png"
     shell:
         "Rscript {R_opts} analysis/datasets/create-figure-1.R"
 
@@ -270,7 +273,8 @@ rule create_benchmark_fig:
         ouija_csv
     output:
         "figs/fig_benchmark.png",
-        "data/benchmarking/summarised_results.csv"
+        "data/benchmarking/summarised_results.csv",
+        "data/benchmarking/incorp_prior_sigtest.csv"
     shell:
         "Rscript {R_opts} analysis/benchmarking/benchmark-fig.R"
 

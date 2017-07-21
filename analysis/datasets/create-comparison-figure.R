@@ -50,3 +50,6 @@ relative_marker_correlations <- last_plot()
 
 saveRDS(marker_correlations, "figs/marker_correlations.rds")
 saveRDS(relative_marker_correlations, "figs/relative_marker_correlations.rds")
+
+filter(df, dataset != "Li et al.") %>% 
+  write_csv("data/max_correlations.csv")

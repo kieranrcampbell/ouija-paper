@@ -20,4 +20,10 @@ left_grid <- cowplot::plot_grid(heatmap, correlations, ncol = 1, rel_heights = c
 
 fig1 <- cowplot::plot_grid(left_grid, examples, nrow = 1)
 
-ggsave("figs/fig1.png", width = 12, height = 8)
+ggsave("figs/fig_global_marker.png", width = 12, height = 8)
+
+relative <- readRDS("figs/relative_marker_correlations.rds")
+
+relative + ylim(0, 1.05)
+
+ggsave("figs/supp_relative_cor.png", width = 6, height = 2.5)

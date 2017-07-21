@@ -210,7 +210,18 @@ na_df <- group_by(sim_df, G, condition, sim_regime) %>%
 
 # Experimental ------------------------------------------------------------
 
-g6 <- filter(sim_df, G == 9, sim_regime == "Complementary log-log")
-x <- filter(g6, condition == "noninformative") %>% .$abscor
-y <- filter(g6, condition == "true") %>% .$abscor
-wilcox.test(x,y, alternative = "less")
+sim_df_ouija <- filter(sim_df, condition %in% c("noninformative", "true")) %>% 
+  select(-kendall_tau, -sign) %>% 
+  spread(condition, abscor)
+
+wtest_pval <- function(x, y) wilcox.test(x, y, alternative = "less")$p.value
+
+sim_df_sigtest <- group_by(sim_df_ouija, G, sim_regime) %>% 
+  summarise(p_val = wtest_pval(noninformative, true))
+  
+write_csv(sim_df_sigtest, "data/benchmarking/incorp_prior_sigtest.csv")
+
+# Generate table in latex via
+print(xtable(df, digits = c(0, 0, 0, -1),
+             caption = "P-values reported by Wilcoxon rank-sum test on the correlations to true pseudotime comparing informative priors to noninformative priors."
+             ), include.rownames = FALSE)

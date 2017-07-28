@@ -5,6 +5,24 @@ output:
   html_notebook: default
 ---
 
+```{r, include = FALSE}
+cor_to_tidy <- function(d, dataset) {
+  dcor <- cor(d, use = "na")
+  dcor_df <- as_data_frame(dcor) %>% 
+    dplyr::mutate(row_alg = rownames(dcor)) %>% 
+    gather(col_alg, correlation, -row_alg) %>% 
+    mutate(dataset = dataset)
+  lt <- as_data_frame(lower.tri(dcor))
+  colnames(lt) <- colnames(dcor)
+  lt_df <- as_data_frame(lt) %>% 
+    dplyr::mutate(row_alg = rownames(dcor)) %>% 
+    gather(col_alg, is_lower_tri, -row_alg)
+  dcor_df <- inner_join(dcor_df, lt_df, by = c("row_alg", "col_alg"))
+  dcor_df <- dplyr::filter(dcor_df, is_lower_tri)
+  dcor_df
+}
+```
+
 Load libraries and sceset:
 
 ```{r, load-libraries}
@@ -15,6 +33,7 @@ knitr::opts_chunk$set(fig.width = 5, fig.height = 4, cache = TRUE)
 suppressPackageStartupMessages(library(scater))
 suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(tidyr))
+suppressPackageStartupMessages(library(readr))
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(gplots))
 suppressPackageStartupMessages(library(viridis))
@@ -126,6 +145,10 @@ d <- data.frame(original_monocle = sce$Pseudotime, dpt_highvar_genes = dpt_highv
            ouija_markers = map_pseudotime(oui), 
            tscan_highvar_genes = tscan_highvar)
 GGally::ggpairs(d)
+```
+
+```{r, cache = FALSE}
+write_csv(cor_to_tidy(d, "trapnell"), "../../data/cor_comp/trapnell.csv")
 ```
 
 ```{r}
@@ -244,15 +267,14 @@ plt <- base_plot + geom_line(data = pred_expr, color = 'darkred', size = 1.2)
 
 Overall plot:
 
-```{r}
+```{r, cache = FALSE}
 cowplot::plot_grid(plt, algorithm_plot, labels = c("C", "D"),
                    rel_heights = c(1,2.2), ncol = 1, label_size = 12)
 example_plot <- last_plot()
 ```
 
 ```{r, cache = FALSE}
-saveRDS(last_plot(), "../../figs/trapnell_example_genes.rds")
-
+saveRDS(example_plot, "../../figs/trapnell_example_genes.rds")
 ```
 
 
@@ -289,9 +311,10 @@ er_tidy$column <- as.integer(er_tidy$column)
 pal <- viridis_pal()(9)
 
 ggplot(er_tidy, aes(x = row, y = column, fill = correlation)) +
-  geom_raster() + #scale_fill_gradient2(low = pal[1], mid = pal[5], high = pal[9])
-  scale_fill_viridis(option = "C", name = "Correlation") +
-  theme_void() #+
+  geom_raster() + 
+  scale_fill_gradient2(low = pal[2], mid = "white", high = pal[8]) +
+  theme_void() 
+  # scale_fill_gradient2() #+
   # theme(legend.position = 'top')
 saveRDS(last_plot(), "../../figs/trapnell_correlation.rds")
 ```
@@ -338,7 +361,7 @@ pc_cor_plot <- last_plot()
 Together as one plot:
 
 ```{r}
-cowplot::plot_grid(scree_plot, pc_cor_plot, nrow = 1, rel_widths = c(1,2),
+cowplot::plot_grid(scree_plot,pc_cor_plot, nrow = 1, rel_widths = c(1,2),
                    labels = "AUTO")
 ggsave("../../figs/supp_trapnell.png", width = 8, height = 3.5)
 ```

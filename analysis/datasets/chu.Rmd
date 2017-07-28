@@ -5,6 +5,25 @@ output:
   html_notebook: default
 ---
 
+
+```{r, include = FALSE}
+cor_to_tidy <- function(d, dataset) {
+  dcor <- cor(d, use = "na")
+  dcor_df <- as_data_frame(dcor) %>% 
+    dplyr::mutate(row_alg = rownames(dcor)) %>% 
+    gather(col_alg, correlation, -row_alg) %>% 
+    mutate(dataset = dataset)
+  lt <- as_data_frame(lower.tri(dcor))
+  colnames(lt) <- colnames(dcor)
+  lt_df <- as_data_frame(lt) %>% 
+    dplyr::mutate(row_alg = rownames(dcor)) %>% 
+    gather(col_alg, is_lower_tri, -row_alg)
+  dcor_df <- inner_join(dcor_df, lt_df, by = c("row_alg", "col_alg"))
+  dcor_df <- dplyr::filter(dcor_df, is_lower_tri)
+  dcor_df
+}
+```
+
 Load libraries and sceset:
 
 ```{r, load-libraries}
@@ -16,6 +35,7 @@ suppressPackageStartupMessages(library(scater))
 suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(viridis))
 suppressPackageStartupMessages(library(tidyr))
+suppressPackageStartupMessages(library(readr))
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(stringr))
 devtools::load_all("~/oxford/bnlfa/oui/ouija")
@@ -162,6 +182,11 @@ d <- data.frame(dpt_highvar_genes = dpt_highvar, monocle_highvar_genes = monocle
 GGally::ggpairs(d)
 ```
 
+```{r, cache = FALSE}
+write_csv(cor_to_tidy(d, "chu"), "../../data/cor_comp/chu.csv")
+```
+
+
 ```{r}
 ouija_pst <- map_pseudotime(oui)
 df_cor <- data.frame(
@@ -304,5 +329,28 @@ cowplot::plot_grid(expression_plot, middle_grid, diff_plot_grid,
                    labels = c("A", "", "D"), label_size = 12,
                    rel_widths = c(2.5,2,1.5), nrow = 1)
 ggsave("../../figs/fig_interpretable.png", width = 12, height = 5)
+```
+
+
+Look at the gene-gene correlation:
+
+
+```{r}
+library(viridis)
+library(gplots)
+library(RColorBrewer)
+expr_mat <- t(exprs(sce_marker))
+ecor <- abs(cor(expr_mat))
+set1 <- brewer.pal(3, "Set1")
+
+rsc <- 1 + as.numeric(response_types == "transient")
+rsc <- set1[rsc]
+names(rsc) = response_types
+
+png("../../figs/supp_abs_cor.png", width = 10*300, height = 9*300, res = 300)
+heatmap.2(ecor, trace = "none", col = "viridis",
+          ColSideColors = rsc, RowSideColors = rsc,
+          key.xlab = "Absolute correlation")
+dev.off()
 ```
 

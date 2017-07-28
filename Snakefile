@@ -97,7 +97,9 @@ rule chu_analysis:
     output:
         "analysis/datasets/chu.html",
         "data/mvt_csv/chu.csv",
-        "figs/fig_interpretable.png"
+        "figs/fig_interpretable.png",
+        "data/cor_comp/chu.csv"
+
     shell:
         "Rscript -e \"rmarkdown::render('analysis/datasets/chu.Rmd')\""
 
@@ -106,7 +108,9 @@ rule dulken_analysis:
         "data/scesets/dulken-sce.rds"
     output:
         "analysis/datasets/dulken.html",
-        "data/mvt_csv/dulken.csv"
+        "data/mvt_csv/dulken.csv",
+        "data/cor_comp/dulken.csv"
+
     shell:
         "Rscript -e \"rmarkdown::render('analysis/datasets/dulken.Rmd')\""
 
@@ -114,7 +118,8 @@ rule shin_analysis:
     output:
         "analysis/datasets/shin.html",
         "data/mvt_csv/shin.csv",
-        "figs/supp_shin.png"
+        "figs/supp_shin.png",
+        "data/cor_comp/shin.csv"
     shell:
         "Rscript -e \"rmarkdown::render('analysis/datasets/shin.Rmd')\""
 
@@ -124,7 +129,8 @@ rule trapnell_analysis:
         "data/mvt_csv/trapnell.csv",
         "figs/trapnell_correlation.rds",
         "figs/trapnell_example_genes.rds",
-        "figs/supp_trapnell.png"
+        "figs/supp_trapnell.png",
+        "data/cor_comp/trapnell.csv"
     shell:
         "Rscript -e \"rmarkdown::render('analysis/datasets/trapnell.Rmd')\""
 
@@ -132,7 +138,9 @@ rule zhou_analysis:
     output:
         "analysis/datasets/zhou.html",
         "data/mvt_csv/zhou.csv",
-        "figs/fig3.png"
+        "figs/fig3.png",
+        "data/cor_comp/zhou.csv"
+
     shell:
         "Rscript -e \"rmarkdown::render('analysis/datasets/zhou.Rmd')\""
 
@@ -159,13 +167,15 @@ rule marker_correlation_figs:
     output:
         "figs/marker_correlations.rds",
         "figs/relative_marker_correlations.rds",
-        "data/max_correlations.csv"
+        "data/max_correlations.csv",
+        "figs/supp_correlation_comparison.png",
+        "data/correlation_comparison_linear_model.csv"
     shell:
         "Rscript {R_opts} analysis/datasets/create-comparison-figure.R"
 
 # Figures --------
 
-rule figure_1:
+rule comparison_figure:
     input:
         "figs/marker_correlations.rds",
         "figs/trapnell_correlation.rds",
@@ -176,6 +186,13 @@ rule figure_1:
         "figs/supp_relative_cor.png"
     shell:
         "Rscript {R_opts} analysis/datasets/create-figure-1.R"
+
+rule main_figure_template:
+    output:
+        "figs/main_template.png"
+    shell:
+        "Rscript {R_opts} scripts/example-fig.R"
+
 
 
 

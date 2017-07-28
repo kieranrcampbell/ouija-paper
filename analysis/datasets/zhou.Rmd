@@ -5,6 +5,25 @@ output:
   html_notebook: default
 ---
 
+
+```{r, include = FALSE}
+cor_to_tidy <- function(d, dataset) {
+  dcor <- cor(d, use = "na")
+  dcor_df <- as_data_frame(dcor) %>% 
+    dplyr::mutate(row_alg = rownames(dcor)) %>% 
+    gather(col_alg, correlation, -row_alg) %>% 
+    mutate(dataset = dataset)
+  lt <- as_data_frame(lower.tri(dcor))
+  colnames(lt) <- colnames(dcor)
+  lt_df <- as_data_frame(lt) %>% 
+    dplyr::mutate(row_alg = rownames(dcor)) %>% 
+    gather(col_alg, is_lower_tri, -row_alg)
+  dcor_df <- inner_join(dcor_df, lt_df, by = c("row_alg", "col_alg"))
+  dcor_df <- dplyr::filter(dcor_df, is_lower_tri)
+  dcor_df
+}
+```
+
 Load libraries and sceset:
 
 ```{r, load-libraries}
@@ -15,6 +34,7 @@ knitr::opts_chunk$set(fig.width = 5, fig.height = 4, cache = TRUE)
 suppressPackageStartupMessages(library(scater))
 suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(readr))
 suppressPackageStartupMessages(library(tidyr))
 suppressPackageStartupMessages(library(viridis))
 suppressPackageStartupMessages(library(gridExtra))
@@ -42,6 +62,12 @@ Have a look at PCA of top 500 most variable (scater default) and markers only. W
 ```{r, fig.show = 'hold', fig.height = 3, fig.width = 4}
 plotPCA(sce, colour_by = 'cell_type')
 plotPCA(sce_marker, colour_by = 'cell_type')
+```
+
+```{r}
+sce$`Cell type` <- sce$cell_type
+plotPCA(sce, colour_by = 'Cell type', ntop = 1000)
+ggsave("../../figs/supp_zhou_pca.png", width = 5, height = 4)
 ```
 
 
@@ -172,6 +198,10 @@ d <- data.frame(dpt_highvar_genes = dpt_highvar, monocle_highvar_genes = monocle
            tscan_highvar_genes = tscan_highvar)
 GGally::ggpairs(d)
 
+```
+
+```{r, cache = FALSE}
+write_csv(cor_to_tidy(d, "zhou"), "../../data/cor_comp/zhou.csv")
 ```
 
 

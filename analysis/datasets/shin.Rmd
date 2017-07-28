@@ -5,6 +5,25 @@ output:
   html_notebook: default
 ---
 
+```{r, include = FALSE}
+cor_to_tidy <- function(d, dataset) {
+  dcor <- cor(d, use = "na")
+  dcor_df <- as_data_frame(dcor) %>% 
+    dplyr::mutate(row_alg = rownames(dcor)) %>% 
+    gather(col_alg, correlation, -row_alg) %>% 
+    mutate(dataset = dataset)
+  lt <- as_data_frame(lower.tri(dcor))
+  colnames(lt) <- colnames(dcor)
+  lt_df <- as_data_frame(lt) %>% 
+    dplyr::mutate(row_alg = rownames(dcor)) %>% 
+    gather(col_alg, is_lower_tri, -row_alg)
+  dcor_df <- inner_join(dcor_df, lt_df, by = c("row_alg", "col_alg"))
+  dcor_df <- dplyr::filter(dcor_df, is_lower_tri)
+  dcor_df
+}
+```
+
+
 Load libraries and sceset:
 
 ```{r, load-libraries}
@@ -16,6 +35,8 @@ suppressPackageStartupMessages(library(scater))
 suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(tidyr))
+suppressPackageStartupMessages(library(readr))
+
 devtools::load_all("~/oxford/bnlfa/oui/ouija")
 
 
@@ -127,6 +148,11 @@ d <- data.frame(dpt_highvar_genes = dpt_highvar, monocle_highvar_genes = monocle
            tscan_highvar_genes = tscan_highvar)
 GGally::ggpairs(d)
 ```
+
+```{r, cache = FALSE}
+write_csv(cor_to_tidy(d, "shin"), "../../data/cor_comp/shin.csv")
+```
+
 
 ```{r}
 ouija_pst <- map_pseudotime(oui)

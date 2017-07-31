@@ -98,7 +98,9 @@ rule chu_analysis:
         "analysis/datasets/chu.html",
         "data/mvt_csv/chu.csv",
         "figs/fig_interpretable.png",
-        "data/cor_comp/chu.csv"
+        "data/cor_comp/chu.csv",
+        "figs/supp_chu_clustering.png",
+        "data/cluster_tables/chu.txt"
 
     shell:
         "Rscript -e \"rmarkdown::render('analysis/datasets/chu.Rmd')\""
@@ -109,7 +111,9 @@ rule dulken_analysis:
     output:
         "analysis/datasets/dulken.html",
         "data/mvt_csv/dulken.csv",
-        "data/cor_comp/dulken.csv"
+        "data/cor_comp/dulken.csv",
+        "figs/supp_dulken_clustering.png",
+        "data/cluster_tables/dulken.txt"
 
     shell:
         "Rscript -e \"rmarkdown::render('analysis/datasets/dulken.Rmd')\""

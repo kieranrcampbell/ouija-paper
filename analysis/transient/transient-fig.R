@@ -5,6 +5,13 @@ library(forcats)
 library(tidyr)
 library(readr)
 
+
+theme_bw_nolines <- function() {
+  theme_bw() +
+    theme(panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank())
+}
+
 source("analysis/transient/common_simulation_functions.R")
 
 # theme_set(theme_classic())
@@ -25,10 +32,12 @@ ggplot(trans_df, aes(x = G, y = abscor, fill = prop_switch)) +
   geom_boxplot(width = 0.4) +
   ylab(expression("Pearson" ~ rho ~ "to true pseudotime")) +
   xlab("Number of genes") +
+  theme_bw_nolines() +
   scale_fill_brewer(palette = "Set2", name = "Proportion of switch-like genes") +
   theme(legend.position = "bottom",
         legend.background = element_rect(linetype = 'solid', color = 'grey30'),
-        axis.title = element_text(size = 10))
+        axis.title = element_text(size = 10)) +
+  theme(panel.background = element_rect(fill = "white"))
 
 trans_boxplot <- last_plot()
 
@@ -60,9 +69,11 @@ ggplot(df, aes(x = pst, color = type)) +
   geom_line(aes(y = mean), size = 1.2) +
   scale_colour_brewer(palette = "Set1", name = "Behaviour") +
   labs(x = "Pseudotime", y = "Expression") +
+  theme_bw_nolines() +
   theme(legend.position = "bottom",
         legend.background = element_rect(linetype = 'solid', color = 'grey30'),
-        axis.title = element_text(size = 10))
+        axis.title = element_text(size = 10)) +
+  theme(panel.background = element_rect(fill = "white"))
 
 trans_exampleplot <- last_plot()
 
@@ -99,8 +110,10 @@ cor_plot <- cor_plot + theme(axis.title = element_text(size = 10))
 # 
 # ggsave("~/Desktop/transient.png", width = 14, height = 4)
 
-
-incorrect_genes <- incorrect_genes + scale_y_continuous(breaks = c(0, 2, 4, 6))
+correct_genes <- correct_genes +
+  theme(panel.background = element_rect(fill = "white"))
+incorrect_genes <- incorrect_genes + scale_y_continuous(breaks = c(0, 2, 4, 6)) +
+  theme(panel.background = element_rect(fill = "white"))
 left_grid <- cowplot::plot_grid(correct_genes, incorrect_genes,
                                 cor_plot, labels = "AUTO", label_size = 11,
                                 ncol = 1, rel_heights = c(2, 1.3, 2))

@@ -8,6 +8,13 @@ output:
 Load libraries and sceset:
 
 ```{r, load-libraries}
+
+theme_bw_nolines <- function() {
+  theme_bw() +
+    theme(panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank())
+}
+
 set.seed(942)
 
 knitr::opts_chunk$set(fig.width = 5, fig.height = 4, cache = TRUE)
@@ -259,6 +266,7 @@ plot_expr <- function(df, co) {
     geom_point(color = co) +
     facet_wrap(~ gene, scales = "free_y", ncol = 1) +
     stat_smooth(color = 'black') +
+    theme_bw_nolines() +
     theme(strip.background = element_rect(colour="white", fill="white"),
           axis.title = element_text(size = 10)) +
     labs(x = "Ouija pseudotime", y = "Expression")

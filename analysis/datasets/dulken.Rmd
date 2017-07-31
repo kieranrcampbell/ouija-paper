@@ -107,7 +107,11 @@ We can construct the confusion matrix to find discrete cell types:
 ```{r}
 cmat <- confusion_matrix(oui)
 cmo <- confusion_matrix_ordered(oui, cmat)
+```
+
+```{r, cache = FALSE}
 plot_confusion(oui, cmo)
+ggsave("../../figs/supp_dulken_clustering.png", width = 6, height = 5)
 ```
 
 And cluster it to find cell types
@@ -131,7 +135,12 @@ plotPCA(sce_marker, colour_by = 'cluster')
 How do these clusters compare to the capture time?
 
 ```{r}
-print(table(droplevels(sce_marker$cell_type), sce_marker$cluster))
+t <- table(droplevels(sce_marker$cell_type), sce_marker$cluster)
+print(t)
+```
+
+```{r, cache = FALSE}
+print(xtable::xtable(t), file = "../../data/cluster_tables/dulken.txt")
 ```
 
 

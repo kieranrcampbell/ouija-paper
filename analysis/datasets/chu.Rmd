@@ -22,6 +22,12 @@ cor_to_tidy <- function(d, dataset) {
   dcor_df <- dplyr::filter(dcor_df, is_lower_tri)
   dcor_df
 }
+
+theme_bw_nolines <- function() {
+  theme_bw() +
+    theme(panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank())
+}
 ```
 
 Load libraries and sceset:
@@ -128,9 +134,16 @@ We can construct the confusion matrix to find discrete cell types:
 ```{r}
 cmat <- confusion_matrix(oui)
 cmo <- confusion_matrix_ordered(oui, cmat)
-plot_confusion(oui, cmo)
 
 ```
+
+Save:
+
+```{r, cache = FALSE}
+plot_confusion(oui, cmo)
+ggsave("../../figs/supp_chu_clustering.png", width = 6, height = 5)
+```
+
 
 And cluster it to find cell types
 
@@ -154,7 +167,12 @@ plotPCA(sce_marker, colour_by = 'cluster')
 How do these clusters compare to the capture time?
 
 ```{r}
-print(table(sce_marker$capture_time, sce_marker$cluster))
+t <- table(sce_marker$capture_time, sce_marker$cluster)
+print(t)
+```
+
+```{r, cache = FALSE}
+print(xtable::xtable(t), file = "../../data/cluster_tables/chu.txt")
 ```
 
 
@@ -276,9 +294,13 @@ expression_plot <- last_plot()
 
 
 ```{r}
-switch_plot <- plot_switch_times(oui) + ylim(c(0,1)) + theme(legend.position = "bottom") +
+switch_plot <- plot_switch_times(oui) + 
+  theme_bw_nolines() +
+  ylim(c(0,1)) + theme(legend.position = "bottom") +
   size10_axis
-transient_plot <- plot_transient_times(oui) +
+
+transient_plot <- plot_transient_times(oui) + 
+  theme_bw_nolines() +
   theme(axis.title.y = element_text(margin = margin(r = 10))) +
   size10_axis
 
@@ -311,6 +333,7 @@ ggplot(reg_df_i, aes(x = param_diffs, fill = `Significant difference`)) +
   geom_histogram(bins = 50) + facet_wrap(~ label) +
   labs(x = "Posterior difference in regulation times", y = "Posterior samples") +
   scale_fill_brewer(palette = "Set1") +
+  theme_bw_nolines() +
   theme(legend.position = "top",
         legend.title = element_text(size = 10),
         strip.background = element_rect(colour="white", fill="white")) +

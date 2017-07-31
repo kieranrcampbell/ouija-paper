@@ -1,6 +1,12 @@
 library(tidyverse)
 library(stringr)
 
+theme_bw_nolines <- function() {
+  theme_bw() +
+    theme(panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank())
+}
+
 data_dir <- "data/mvt_csv/"
 
 data_files <- dir(data_dir)
@@ -29,6 +35,7 @@ filter(df_tidy, dataset != "Li et al.") %>%
     geom_bar(stat = 'identity', position = 'dodge', color = 'grey30', width = 0.7) +
     ylim(c(0,1)) +
     scale_fill_brewer(palette = "Set2") +
+    theme_bw_nolines() +
     theme(legend.title = element_blank()) +
     ylab("Correlation to Ouija\nmarker pseudotime") +
     xlab("Dataset") +

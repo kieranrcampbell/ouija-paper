@@ -21,6 +21,12 @@ cor_to_tidy <- function(d, dataset) {
   dcor_df <- dplyr::filter(dcor_df, is_lower_tri)
   dcor_df
 }
+
+theme_bw_nolines <- function() {
+  theme_bw() +
+    theme(panel.grid.major = element_blank(), 
+          panel.grid.minor = element_blank())
+}
 ```
 
 Load libraries and sceset:
@@ -223,6 +229,7 @@ filter(expr_df_tidy2, !grepl("Ouija", algorithm)) %>%
     labs(x = "Pseudotime", y = "Normalised expression") +
     stat_smooth(se = F, color = 'darkred') +
   scale_y_continuous() +
+  theme_bw_nolines() +
   theme(strip.background = element_rect(colour="white", fill="white")) +
   theme(axis.title = element_text(size = 9))
 
@@ -245,6 +252,7 @@ filter(expr_df_tidy2, grepl("Ouija", algorithm)) %>%
     geom_point(shape = 21, color = 'black', fill = 'grey70') +
     facet_grid(algorithm ~ gene) +
     labs(x = "Pseudotime", y = "Normalised expression") +
+  theme_bw_nolines() +
   theme(strip.background = element_rect(colour="white", fill="white")) +
   theme(axis.title = element_text(size = 9))
 
@@ -312,7 +320,7 @@ pal <- viridis_pal()(9)
 
 ggplot(er_tidy, aes(x = row, y = column, fill = correlation)) +
   geom_raster() + 
-  scale_fill_gradient2(low = pal[2], mid = "white", high = pal[8]) +
+  scale_fill_gradient2(low = pal[2], mid = "white", high = pal[5]) +
   theme_void() 
   # scale_fill_gradient2() #+
   # theme(legend.position = 'top')

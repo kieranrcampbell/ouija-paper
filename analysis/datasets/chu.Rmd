@@ -238,7 +238,7 @@ readr::write_csv(df_cor, "../../data/mvt_csv/chu.csv")
 
 ```{r}
 reg_df <- regulation_df(oui)
-sig_regs <- significant_regulation(reg_df)
+sig_regs <- gene_regulation(oui)
 
 reg_df_all <- inner_join(reg_df, sig_regs, by = "label")
 

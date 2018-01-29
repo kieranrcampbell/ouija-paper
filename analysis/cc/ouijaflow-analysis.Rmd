@@ -1,0 +1,161 @@
+---
+title: "Ouijaflow analysis"
+author: "Kieran Campbell"
+date: "6 September 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(feather)
+library(ggplot2)
+library(dplyr)
+library(cowplot)
+library(viridis)
+library(tidyr)
+
+theme_set(theme_cowplot(font_size = 11))
+```
+
+Load all data:
+
+```{r}
+setwd("~/oxford/bnlfa/ouija-paper")
+load("data/cc/C57BL6_cell_cycle.Rdata")
+
+cycledat <- read_feather("data/cc/cycledat.feather")
+expression <- read_feather("data/cc/expression.feather")
+
+cell_df <- read_feather("~/oxford/bnlfa/ouijaflow/data/cell_df.feather")
+gene_df <- read_feather("~/oxford/bnlfa/ouijaflow/data/gene_df.feather")
+
+gene_df <- mutate(gene_df, gene = as.character(genes))
+
+pca <- prcomp(t(xdat))
+
+cell_df <- mutate(cell_df,
+                  PC1 = pca$x[,1],
+                  PC2 = pca$x[,2],
+                  Phase = cycledat$Estimated.phase,
+                  K = cycledat$Progression.Rank)
+```
+
+And plots:
+
+A:
+
+```{r}
+ggplot(cell_df, aes(x = PC1, y = PC2, colour = K, shape = Phase)) +
+  geom_point() + scale_color_viridis(guide = FALSE) +
+  labs(x = "Principal component 1", y = "Principal component 2",
+       subtitle = "Kowalczyk et al.")
+
+fig_A <- last_plot()
+
+ggplot(cell_df, aes(x = PC1, y = PC2, colour = z_mean, shape = Phase)) +
+  geom_point() + scale_color_viridis(guide = FALSE) +
+  labs(x = "Principal component 1", y = "Principal component 2",
+       subtitle = "Ouija")
+
+fig_B <- last_plot()
+
+ggplot(cell_df, aes(x = Phase, y = z_mean, fill = Phase)) +
+  geom_violin() +
+  theme(legend.position = "None") +
+  labs(x = "Cell Cycle Phase", y = "Pseudotime")
+
+fig_C <- last_plot()
+```
+
+```{r}
+gene_thresh <- 4
+
+ggplot(gene_df, aes(x = t0_mean, y = k_mean)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = k_lower, ymax = k_upper)) +
+  labs(x = "Genes (by switch time)", y = "Activation strength") +
+  geom_hline(yintercept = gene_thresh, color = 'red')
+
+fig_D <- last_plot()
+```
+
+
+```{r}
+sigmoid <- function(z, mu0, k, t0) {
+  mu0 / (1 + exp(-k * (z - t0)))
+}
+
+predicted_expression <- sapply(seq_along(gene_df$k_mean), function(g) {
+  sigmoid(cell_df$z_mean, gene_df$mu0_mean[g],
+          gene_df$k_mean[g], gene_df$t0_mean[g])
+})
+
+
+
+genes_to_use <- abs(gene_df$k_mean) > gene_thresh
+gtu <- as.character(genes)[genes_to_use]
+
+tidy_mat <- function(x, gtu, s = "predicted") {
+  x <- as_data_frame(x)
+  names(x) <- as.character(genes)
+  x <- mutate(x, z = cell_df$z_mean, z_rank = rank(cell_df$z_mean))
+  xt <- gather(x, gene, expression, -z, -z_rank) %>% 
+    mutate(type = s)
+  filter(xt, gene %in% gtu)
+}
+
+xdat_normalised <- read_feather("data/cc/expression.feather")
+
+gex_tidy <- tidy_mat(t(xdat_normalised), gtu, "measured")
+pex_tidy <- tidy_mat(predicted_expression, gtu, "predicted")
+
+t0 <- gene_df$t0_mean[genes_to_use]
+gene_t0_ordered <- gtu[order(t0)]
+
+gex_tidy$gene <- factor(gex_tidy$gene, levels = gene_t0_ordered)
+pex_tidy$gene <- factor(pex_tidy$gene, levels = gene_t0_ordered)
+
+# ggplot(mapping = aes(x = z, y = expression)) +
+#   geom_point(data = gex_tidy) +
+#   geom_line(data = arrange(pex_tidy, z), color = 'red') +
+#   facet_wrap(~ gene)
+
+```
+
+
+
+```{r}
+
+ggplot(gex_tidy, aes(x = gene, y = z_rank, fill = expression)) + 
+  geom_raster() +
+  labs(y = "Cells (ordered)", x = "Cell Cycle Genes (by switch time)") +
+  scale_fill_gradient(low = "white", high = "red") +
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 90, hjust = 1),
+        axis.text.y = element_blank(),
+        axis.ticks.y = element_blank())
+
+fig_E <- last_plot()
+
+gene_df_2 <- filter(gene_df, gene %in% gtu)
+gene_df_2$gene <- factor(gene_df_2$gene, levels = gene_t0_ordered)
+
+ggplot(gene_df_2, aes(x = gene, y = t0_mean)) + 
+  geom_errorbar(aes(ymin = t0_lower, ymax = t0_upper)) +
+  geom_point(shape = 21, fill = "white") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(y = "Switch time", x = "Cell Cycle Genes")
+
+fig_F <- last_plot()
+```
+
+```{r}
+upper_grid <- plot_grid(fig_A, fig_B, fig_C, fig_D, labels = "AUTO",
+                        nrow = 1)
+
+plot_grid(upper_grid, fig_E, fig_F, ncol = 1, labels = c("", "E", "F"))
+
+ggsave("regev_new.png", width = 14, height = 8)
+```
+

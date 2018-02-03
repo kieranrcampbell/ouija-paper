@@ -1,0 +1,40 @@
+
+
+samples = list(range(1, 100, 1))
+
+sde_csvs = expand("../../data/switchde/sde/switchde_fit_sample_{s}.csv", s = samples)
+
+
+rule all:
+    input:
+        sde_csvs,
+        "../../figs/switchde/fig_switchde.png"
+
+
+rule fit_ouija:
+    input:
+        "../../data/scesets_with_marker_pseudotime.rds"
+    output:
+        "../../data/switchde/ouija_traces.csv"
+    shell:
+        "Rscript 1_fit_ouija.R --output_csv {output}"
+
+rule fit_switchde:
+    input:
+        "../../data/switchde/ouija_traces.csv"
+    output:
+        "../../data/switchde/sde/switchde_fit_sample_{s}.csv"
+    shell:
+        "Rscript 2_fit_switchde.R --input_csv {input} --output_csv {output} --trace_sample {wildcards.s}"
+
+rule plot_results:
+    input:
+        sde_csvs
+    output:
+        "../../figs/switchde/fig_switchde.png"
+    shell:
+        "Rscript 3_parse_switchde_results.R --output_png {output}"
+
+
+
+        

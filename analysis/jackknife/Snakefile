@@ -1,0 +1,43 @@
+
+
+
+lo_genes = list(range(1, 6, 1))
+l1o_fits = expand("../../data/jackknife/l1o/ouija_fit_gene_{gene}_left_out.csv", gene = lo_genes)
+l2o_fits = expand("../../data/jackknife/l2o/ouija_fit_gene1_{gene1}_gene2_{gene2}_left_out.csv", gene1 = lo_genes, gene2 = lo_genes)
+
+rule all:
+    input:
+        "../../figs/jackknife/l2o_expression.png",
+        "../../figs/jackknife/l1o_expression.png"
+
+rule fit_l1o:
+    input:
+        "../../data/scesets_with_marker_pseudotime.rds"
+    output:
+        "../../data/jackknife/l1o/ouija_fit_gene_{gene}_left_out.csv"
+    shell:
+        "Rscript jk_ouija.R --gene1 {wildcards.gene} --output_csv {output}"
+
+rule fit_l2o:
+    input:
+        "../../data/scesets_with_marker_pseudotime.rds"
+    output:
+        "../../data/jackknife/l2o/ouija_fit_gene1_{gene1}_gene2_{gene2}_left_out.csv"
+    shell:
+        "Rscript jk_ouija.R --gene1 {wildcards.gene1} --gene2 {wildcards.gene2} --output_csv {output}"
+
+rule graph_l1:
+    input:
+        l1o_fits
+    output:
+        "../../figs/jackknife/l1o_expression.png"
+    shell:
+        "Rscript graph_results.R"
+
+rule graph_l2:
+    input:
+        l2o_fits
+    output:
+        "../../figs/jackknife/l2o_expression.png"
+    shell:
+        "Rscript graph_results_l2o.R"
